@@ -26,6 +26,7 @@
     "express-rate-limit": "^8.3.2",
     "express-session": "^1.17.3",
     "express-validator": "^7.3.1",
+    "helmet": "^8.1.0",
     "pino": "^10.3.1",
     "pino-pretty": "^13.1.3"
   },

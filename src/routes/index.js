@@ -10,7 +10,7 @@ router.get('/', (req, res) => {
     res.render('index', data);
   } catch (err) {
     logger.error({ err }, 'Dashboard error');
-    res.render('error', { message: 'Error loading dashboard', error: err });
+    res.render('error', { message: 'Error loading dashboard', error: { status: 500 } });
   }
 });
 

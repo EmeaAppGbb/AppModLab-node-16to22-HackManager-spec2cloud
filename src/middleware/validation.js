@@ -21,8 +21,18 @@ const loginRules = [
 const registerRules = [
   body('username').trim().notEmpty().withMessage('Username is required').isLength({ min: 3, max: 50 }).withMessage('Username must be 3-50 characters'),
   body('email').trim().isEmail().withMessage('Valid email is required').normalizeEmail(),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('role').optional().isIn(['participant', 'judge', 'admin']).withMessage('Invalid role'),
+  body('password')
+    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters')
+    .matches(/[a-z]/).withMessage('Password must contain a lowercase letter')
+    .matches(/[A-Z]/).withMessage('Password must contain an uppercase letter')
+    .matches(/\d/).withMessage('Password must contain a number'),
+  body('confirm_password')
+    .custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error('Passwords do not match');
+      }
+      return true;
+    }),
 ];
 
 const hackathonRules = [

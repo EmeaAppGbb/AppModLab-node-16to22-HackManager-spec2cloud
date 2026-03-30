@@ -117,14 +117,14 @@ const insertUser = db.prepare(`
 `);
 
 const users = [
-  { username: 'admin', email: 'admin@hackmanager.com', password: bcrypt.hashSync('admin123', 10), role: 'admin' },
-  { username: 'judge_sarah', email: 'sarah@example.com', password: bcrypt.hashSync('judge123', 10), role: 'judge' },
-  { username: 'judge_mike', email: 'mike@example.com', password: bcrypt.hashSync('judge123', 10), role: 'judge' },
-  { username: 'alice_dev', email: 'alice@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
-  { username: 'bob_coder', email: 'bob@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
-  { username: 'carol_hacker', email: 'carol@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
-  { username: 'dave_maker', email: 'dave@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
-  { username: 'eve_builder', email: 'eve@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' }
+  { username: 'admin', email: 'admin@hackmanager.com', password: bcrypt.hashSync('Admin1234', 10), role: 'admin' },
+  { username: 'judge_sarah', email: 'sarah@example.com', password: bcrypt.hashSync('Judge1234', 10), role: 'judge' },
+  { username: 'judge_mike', email: 'mike@example.com', password: bcrypt.hashSync('Judge1234', 10), role: 'judge' },
+  { username: 'alice_dev', email: 'alice@example.com', password: bcrypt.hashSync('Alice1234', 10), role: 'participant' },
+  { username: 'bob_coder', email: 'bob@example.com', password: bcrypt.hashSync('Bobcoder1', 10), role: 'participant' },
+  { username: 'carol_hacker', email: 'carol@example.com', password: bcrypt.hashSync('Carol1234', 10), role: 'participant' },
+  { username: 'dave_maker', email: 'dave@example.com', password: bcrypt.hashSync('Davepass1', 10), role: 'participant' },
+  { username: 'eve_builder', email: 'eve@example.com', password: bcrypt.hashSync('Evepass12', 10), role: 'participant' }
 ];
 
 const insertUsers = db.transaction((items) => {

@@ -22,7 +22,11 @@ function requireJudge(req, res, next) {
   next();
 }
 
-function requireOwnerOrAdmin(resourceQuery) {
+const ownerQueries = {
+  hackathon: 'SELECT created_by FROM hackathons WHERE id = ?',
+};
+
+function requireOwnerOrAdmin(resourceType) {
   return (req, res, next) => {
     if (!req.session.user) {
       return res.redirect('/auth/login');
@@ -30,10 +34,17 @@ function requireOwnerOrAdmin(resourceQuery) {
     if (req.session.user.role === 'admin') {
       return next();
     }
+    const query = ownerQueries[resourceType];
+    if (!query) {
+      return res.status(500).render('error', {
+        message: 'Server configuration error',
+        error: { status: 500 },
+      });
+    }
     const database = require('../config/database');
     const db = database.getDb();
     const id = req.params.id;
-    const resource = db.prepare(resourceQuery).get(id);
+    const resource = db.prepare(query).get(id);
     if (!resource) {
       return res.status(404).render('error', {
         message: 'Resource not found',

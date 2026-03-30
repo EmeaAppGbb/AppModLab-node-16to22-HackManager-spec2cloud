@@ -13,7 +13,7 @@ router.get('/hackathons', (req, res) => {
     res.render('hackathons/index', { hackathons });
   } catch (err) {
     logger.error({ err }, 'Error fetching hackathons');
-    res.render('error', { message: 'Error loading hackathons', error: err });
+    res.render('error', { message: 'Error loading hackathons', error: { status: 500 } });
   }
 });
 
@@ -33,7 +33,7 @@ router.post('/hackathons', auth.requireAuth, hackathonRules, handleValidationErr
     res.redirect('/hackathons/' + result.lastInsertRowid);
   } catch (err) {
     logger.error({ err }, 'Error creating hackathon');
-    res.render('error', { message: 'Error creating hackathon', error: err });
+    res.render('error', { message: 'Error creating hackathon', error: { status: 500 } });
   }
 });
 
@@ -47,11 +47,11 @@ router.get('/hackathons/:id', (req, res) => {
     res.render('hackathons/show', data);
   } catch (err) {
     logger.error({ err }, 'Error fetching hackathon');
-    res.render('error', { message: 'Error loading hackathon', error: err });
+    res.render('error', { message: 'Error loading hackathon', error: { status: 500 } });
   }
 });
 
-const hackathonOwnerCheck = auth.requireOwnerOrAdmin('SELECT created_by FROM hackathons WHERE id = ?');
+const hackathonOwnerCheck= auth.requireOwnerOrAdmin('hackathon');
 
 /* GET edit hackathon form */
 router.get('/hackathons/:id/edit', auth.requireAuth, hackathonOwnerCheck, (req, res) => {
@@ -63,7 +63,7 @@ router.get('/hackathons/:id/edit', auth.requireAuth, hackathonOwnerCheck, (req, 
     res.render('hackathons/edit', { hackathon });
   } catch (err) {
     logger.error({ err }, 'Error fetching hackathon for edit');
-    res.render('error', { message: 'Error loading hackathon', error: err });
+    res.render('error', { message: 'Error loading hackathon', error: { status: 500 } });
   }
 });
 
@@ -76,7 +76,7 @@ router.post('/hackathons/:id/update', auth.requireAuth, hackathonOwnerCheck, hac
     res.redirect('/hackathons/' + req.params.id);
   } catch (err) {
     logger.error({ err }, 'Error updating hackathon');
-    res.render('error', { message: 'Error updating hackathon', error: err });
+    res.render('error', { message: 'Error updating hackathon', error: { status: 500 } });
   }
 });
 
@@ -87,7 +87,7 @@ router.post('/hackathons/:id/delete', auth.requireAuth, hackathonOwnerCheck, (re
     res.redirect('/hackathons');
   } catch (err) {
     logger.error({ err }, 'Error deleting hackathon');
-    res.render('error', { message: 'Error deleting hackathon', error: err });
+    res.render('error', { message: 'Error deleting hackathon', error: { status: 500 } });
   }
 });
 

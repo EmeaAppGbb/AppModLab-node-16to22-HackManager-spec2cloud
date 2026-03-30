@@ -12,7 +12,7 @@ router.get('/judging', auth.requireAuth, (req, res) => {
     res.render('judging/index', { submissions });
   } catch (err) {
     logger.error({ err }, 'Error fetching judging list');
-    res.render('error', { message: 'Error loading judging page', error: err });
+    res.render('error', { message: 'Error loading judging page', error: { status: 500 } });
   }
 });
 
@@ -26,7 +26,7 @@ router.get('/submissions/:id/judge', auth.requireJudge, (req, res) => {
     res.render('judging/score', { submission });
   } catch (err) {
     logger.error({ err }, 'Error loading judge form');
-    res.render('error', { message: 'Error loading scoring form', error: err });
+    res.render('error', { message: 'Error loading scoring form', error: { status: 500 } });
   }
 });
 
@@ -44,7 +44,7 @@ router.post('/submissions/:id/score', auth.requireJudge, scoreRules, handleValid
     res.redirect('/judging');
   } catch (err) {
     logger.error({ err }, 'Error scoring submission');
-    res.render('error', { message: 'Error saving score', error: err });
+    res.render('error', { message: 'Error saving score', error: { status: 500 } });
   }
 });
 

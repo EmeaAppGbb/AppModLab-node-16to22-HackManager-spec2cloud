@@ -50,7 +50,8 @@ describe('Authentication Flow', () => {
         .send({
           username: 'integrationreg',
           email: 'integ@reg.com',
-          password: 'password123',
+          password: 'Password1',
+          confirm_password: 'Password1',
           role: 'participant',
           _csrf: csrfToken,
         });
@@ -69,12 +70,13 @@ describe('Authentication Flow', () => {
         .send({
           username: 'authflowuser',
           email: 'unique@email.com',
-          password: 'password123',
+          password: 'Password1',
+          confirm_password: 'Password1',
           role: 'participant',
           _csrf: csrfToken,
         });
       expect(res.status).toBe(200);
-      expect(res.text).toContain('already exists');
+      expect(res.text).toContain('Registration failed');
     });
   });
 

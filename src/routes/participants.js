@@ -11,7 +11,7 @@ router.get('/participants', (req, res) => {
     res.render('participants/index', { participants });
   } catch (err) {
     logger.error({ err }, 'Error fetching participants');
-    res.render('error', { message: 'Error loading participants', error: err });
+    res.render('error', { message: 'Error loading participants', error: { status: 500 } });
   }
 });
 
@@ -22,7 +22,7 @@ router.post('/hackathons/:hackathonId/participants/join', auth.requireAuth, (req
     res.redirect('/hackathons/' + req.params.hackathonId);
   } catch (err) {
     logger.error({ err }, 'Error joining hackathon');
-    res.render('error', { message: 'Error joining hackathon', error: err });
+    res.render('error', { message: 'Error joining hackathon', error: { status: 500 } });
   }
 });
 

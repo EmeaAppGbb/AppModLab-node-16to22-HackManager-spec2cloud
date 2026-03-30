@@ -43,16 +43,16 @@ describe('authService', () => {
   });
 
   describe('register', () => {
-    it('currently creates a new user with hashed password', async () => {
-      const result = await authService.register('regsvcuser', 'regsvc@example.com', 'securepass', 'judge');
+    it('currently creates a new user with hashed password and participant role', async () => {
+      const result = await authService.register('regsvcuser', 'regsvc@example.com', 'securepass');
       expect(result.lastInsertRowid).toBeGreaterThan(0);
       const user = db.prepare('SELECT * FROM users WHERE username = ?').get('regsvcuser');
       expect(user.email).toBe('regsvc@example.com');
-      expect(user.role).toBe('judge');
+      expect(user.role).toBe('participant');
       expect(user.password).not.toBe('securepass');
     });
 
-    it('currently defaults role to participant when not provided', async () => {
+    it('currently always assigns participant role regardless of input', async () => {
       await authService.register('defaultrolesvc', 'defaultsvc@example.com', 'pass123');
       const user = db.prepare('SELECT * FROM users WHERE username = ?').get('defaultrolesvc');
       expect(user.role).toBe('participant');

@@ -14,7 +14,7 @@ beforeAll(async () => {
 
   const bcrypt = require('bcryptjs');
   const db = database.getDb();
-  const hash = await bcrypt.hash('valpass', 10);
+  const hash = await bcrypt.hash('Valpass123', 10);
   db.prepare('INSERT OR IGNORE INTO users (username, email, password, role) VALUES (?, ?, ?, ?)')
     .run('validationuser', 'validation@test.com', hash, 'admin');
   const userId = db.prepare('SELECT id FROM users WHERE username = ?').get('validationuser').id;
@@ -25,7 +25,7 @@ beforeAll(async () => {
   hackathonId = Number(hackResult.lastInsertRowid);
 
   app = require('../../src/app');
-  authAgent = await createAuthenticatedAgent(app, { username: 'validationuser', password: 'valpass' });
+  authAgent = await createAuthenticatedAgent(app, { username: 'validationuser', password: 'Valpass123' });
 });
 
 describe('Input Validation', () => {
@@ -38,7 +38,7 @@ describe('Input Validation', () => {
       const res = await agent
         .post('/auth/register')
         .type('form')
-        .send({ username: '', email: 'valid@email.com', password: 'password123', _csrf: csrfToken });
+        .send({ username: '', email: 'valid@email.com', password: 'Password1', confirm_password: 'Password1', _csrf: csrfToken });
       expect(res.status).toBe(400);
     });
 
@@ -50,11 +50,11 @@ describe('Input Validation', () => {
       const res = await agent
         .post('/auth/register')
         .type('form')
-        .send({ username: 'emailvaltest', email: 'not-an-email', password: 'password123', _csrf: csrfToken });
+        .send({ username: 'emailvaltest', email: 'not-an-email', password: 'Password1', confirm_password: 'Password1', _csrf: csrfToken });
       expect(res.status).toBe(400);
     });
 
-    it('currently rejects short password (< 6 chars)', async () => {
+    it('currently rejects short password (< 8 chars)', async () => {
       const agent = request.agent(app);
       const page = await agent.get('/auth/register');
       const csrfToken = extractCsrfToken(page.text);
@@ -62,11 +62,11 @@ describe('Input Validation', () => {
       const res = await agent
         .post('/auth/register')
         .type('form')
-        .send({ username: 'shortpwtest', email: 'short@pw.com', password: '12345', _csrf: csrfToken });
+        .send({ username: 'shortpwtest', email: 'short@pw.com', password: 'Ab1234', confirm_password: 'Ab1234', _csrf: csrfToken });
       expect(res.status).toBe(400);
     });
 
-    it('currently rejects invalid role value', async () => {
+    it('currently ignores role parameter (always assigns participant)', async () => {
       const agent = request.agent(app);
       const page = await agent.get('/auth/register');
       const csrfToken = extractCsrfToken(page.text);
@@ -74,8 +74,8 @@ describe('Input Validation', () => {
       const res = await agent
         .post('/auth/register')
         .type('form')
-        .send({ username: 'rolevaltest', email: 'role@val.com', password: 'password123', role: 'superuser', _csrf: csrfToken });
-      expect(res.status).toBe(400);
+        .send({ username: 'rolevaltest', email: 'role@val.com', password: 'Password1', confirm_password: 'Password1', role: 'admin', _csrf: csrfToken });
+      expect(res.status).toBe(302);
     });
   });
 

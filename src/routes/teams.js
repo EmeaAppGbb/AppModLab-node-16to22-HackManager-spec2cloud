@@ -12,7 +12,7 @@ router.get('/teams', (req, res) => {
     res.render('teams/index', { teams });
   } catch (err) {
     logger.error({ err }, 'Error fetching teams');
-    res.render('error', { message: 'Error loading teams', error: err });
+    res.render('error', { message: 'Error loading teams', error: { status: 500 } });
   }
 });
 
@@ -26,7 +26,7 @@ router.get('/hackathons/:hackathonId/teams/new', auth.requireAuth, (req, res) =>
     res.render('teams/new', { hackathon });
   } catch (err) {
     logger.error({ err }, 'Error loading new team form');
-    res.render('error', { message: 'Error loading form', error: err });
+    res.render('error', { message: 'Error loading form', error: { status: 500 } });
   }
 });
 
@@ -41,7 +41,7 @@ router.post('/hackathons/:hackathonId/teams', auth.requireAuth, teamRules, handl
     res.redirect('/teams/' + result.lastInsertRowid);
   } catch (err) {
     logger.error({ err }, 'Error creating team');
-    res.render('error', { message: 'Error creating team', error: err });
+    res.render('error', { message: 'Error creating team', error: { status: 500 } });
   }
 });
 
@@ -55,7 +55,7 @@ router.get('/teams/:id', (req, res) => {
     res.render('teams/show', data);
   } catch (err) {
     logger.error({ err }, 'Error fetching team');
-    res.render('error', { message: 'Error loading team', error: err });
+    res.render('error', { message: 'Error loading team', error: { status: 500 } });
   }
 });
 

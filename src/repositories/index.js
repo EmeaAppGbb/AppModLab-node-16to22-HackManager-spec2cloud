@@ -84,7 +84,7 @@ const teamRepo = {
   findMembers(teamId) {
     return getDb()
       .prepare(
-        'SELECT participants.*, users.username, users.email FROM participants JOIN users ON participants.user_id = users.id WHERE participants.team_id = ?'
+        'SELECT participants.*, users.username FROM participants JOIN users ON participants.user_id = users.id WHERE participants.team_id = ?'
       )
       .all(teamId);
   },
@@ -104,7 +104,7 @@ const participantRepo = {
   findAll() {
     return getDb()
       .prepare(
-        'SELECT participants.*, users.username, users.email, hackathons.name as hackathon_name, teams.name as team_name ' +
+        'SELECT participants.*, users.username, hackathons.name as hackathon_name, teams.name as team_name ' +
           'FROM participants ' +
           'LEFT JOIN users ON participants.user_id = users.id ' +
           'LEFT JOIN hackathons ON participants.hackathon_id = hackathons.id ' +
@@ -120,6 +120,11 @@ const participantRepo = {
   },
   count() {
     return getDb().prepare('SELECT COUNT(*) as count FROM participants').get().count;
+  },
+  findByUserAndTeam(userId, teamId) {
+    return getDb()
+      .prepare('SELECT * FROM participants WHERE user_id = ? AND team_id = ?')
+      .get(userId, teamId);
   },
 };
 

@@ -33,18 +33,14 @@ router.get('/register', (req, res) => {
 
 /* POST register */
 router.post('/register', registerRules, handleValidationErrors, async (req, res) => {
-  const { username, email, password, role } = req.body;
+  const { username, email, password } = req.body;
 
   try {
-    await authService.register(username, email, password, role);
+    await authService.register(username, email, password);
     res.redirect('/auth/login');
   } catch (err) {
     logger.error({ err }, 'Registration error');
-    const errorMsg =
-      err.message && err.message.includes('UNIQUE constraint')
-        ? 'Username or email already exists'
-        : 'An error occurred during registration';
-    res.render('auth/register', { error: errorMsg });
+    res.render('auth/register', { error: 'Registration failed. Please try again.' });
   }
 });
 

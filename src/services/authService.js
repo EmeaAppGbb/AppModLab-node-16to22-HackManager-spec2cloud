@@ -10,10 +10,9 @@ const authService = {
     return { id: user.id, username: user.username, email: user.email, role: user.role };
   },
 
-  async register(username, email, password, role) {
+  async register(username, email, password) {
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userRole = role || 'participant';
-    return userRepo.create(username, email, hashedPassword, userRole);
+    return userRepo.create(username, email, hashedPassword, 'participant');
   },
 };
 
