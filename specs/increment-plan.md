@@ -594,3 +594,434 @@ graph TD
 **25 of 26 assessment findings are covered.** All 4 critical findings are in the first 5 increments.
 
 **Accepted/deferred finding:** A3 (view separation of concerns) — accepted per ADR-001 (incremental refactor keeps EJS). The assessment notes this is "acceptable for server-rendered MPA." May be addressed in a future API+SPA migration if ADR-001 is revisited.
+
+---
+
+# Security Remediation Increments
+
+> **Generated from**: Security assessment (`specs/assessment/security.md`)
+> **Date**: 2026-03-30
+> **Priority**: Tier ordering is mandatory — Tier 1 before Tier 2 before Tier 3 before Tier 4.
+> **Track**: A (testable — 128-test green baseline exists)
+
+## Security Dependency Graph
+
+```mermaid
+graph TD
+    S001[sec-001: Block Privilege Escalation]
+    S002[sec-002: Harden Session Cookies]
+    S003[sec-003: Security Headers via Helmet]
+    S004[sec-004: Strengthen Password Policy]
+    S005[sec-005: Fix Submission IDOR]
+    S006[sec-006: Tighten CSRF Bypass]
+    S007[sec-007: Refactor Owner-Check Middleware]
+    S008[sec-008: Sanitize Error Responses]
+    S009[sec-009: Expand Rate Limiting]
+    S010[sec-010: Remove Email from Public Queries]
+    S011[sec-011: Generic Registration Errors]
+    S012[sec-012: Server-Side Password Confirmation]
+    S013[sec-013: HTTPS Enforcement]
+
+    S001 --> S006
+    S002 --> S003
+    S002 --> S006
+
+    style S001 fill:#ff6b6b,color:#fff
+    style S002 fill:#ff6b6b,color:#fff
+    style S003 fill:#ffa94d
+    style S004 fill:#ffa94d
+    style S005 fill:#ffa94d
+    style S006 fill:#69db7c
+    style S007 fill:#69db7c
+    style S008 fill:#69db7c
+    style S009 fill:#69db7c
+    style S010 fill:#69db7c
+    style S011 fill:#69db7c
+    style S012 fill:#74c0fc
+    style S013 fill:#74c0fc
+```
+
+Legend: 🔴 Tier 1 (Critical) · 🟠 Tier 2 (High) · 🟢 Tier 3 (Medium) · 🔵 Tier 4 (Low)
+
+---
+
+## Tier 1 — Critical (Immediate)
+
+### sec-001: Block Privilege Escalation via Self-Assigned Role
+
+- **Type:** security
+- **Tier:** 1 (Critical)
+- **Vulnerability:** Users can self-assign `admin` or `judge` role during registration by including `role=admin` in the POST body. (Finding SEC-001, CVSS 9.1)
+- **Scope:**
+  - `src/services/authService.js` — Remove `role` parameter from `register()`. Always assign `'participant'`.
+  - `src/routes/auth.js:36` — Stop destructuring `role` from `req.body`.
+  - `src/middleware/validation.js:25` — Remove `body('role')` from `registerRules`.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] `POST /auth/register` with `role=admin` creates a user with role `participant`
+  - [ ] `POST /auth/register` with `role=judge` creates a user with role `participant`
+  - [ ] `POST /auth/register` without `role` creates a user with role `participant`
+  - [ ] Existing registration flow (form submission) still works
+  - [ ] All 128 existing tests pass
+- **Test Strategy:**
+  - Add unit test: `authService.register()` always produces `participant` role regardless of input
+  - Add integration test: POST register with `role=admin` → verify DB row has `role='participant'`
+  - Run full regression suite (128 tests)
+- **Gherkin Deltas:**
+  - New: `Scenario: Registration ignores role parameter` — POST with role=admin produces participant
+  - New: `Scenario: Registration defaults to participant role` — POST without role produces participant
+  - Regression: 128 existing scenarios must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Revert authService.js, auth.js, validation.js to previous versions
+- **Risk:** Low — isolated removal of one parameter. No behavior change for normal registration.
+
+---
+
+### sec-002: Harden Session and CSRF Cookie Configuration
+
+- **Type:** security
+- **Tier:** 1 (Critical)
+- **Vulnerability:** Session cookie missing explicit `httpOnly`, `secure`, and `sameSite` flags. CSRF cookie has `secure: false` hardcoded. Fallback secret `'hackathon-dev-fallback-secret'` in code. (Finding SEC-002, CVSS 8.2)
+- **Scope:**
+  - `src/app.js:37-41` — Add `httpOnly: true`, `secure` based on NODE_ENV, `sameSite: 'strict'` to session cookie config.
+  - `src/app.js:55-60` — Set CSRF `cookieOptions.secure` based on NODE_ENV. Add `httpOnly: true`.
+  - `src/app.js:37,55` — Remove fallback secrets. App should fail to start without `SESSION_SECRET` in production.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] Session cookie sets `httpOnly: true` in all environments
+  - [ ] Session cookie sets `secure: true` when `NODE_ENV=production`
+  - [ ] Session cookie sets `sameSite: 'strict'`
+  - [ ] CSRF cookie sets `secure: true` when `NODE_ENV=production`
+  - [ ] App starts normally in development (SESSION_SECRET in .env)
+  - [ ] All 128 existing tests pass
+- **Test Strategy:**
+  - Add integration test: verify `Set-Cookie` header includes `HttpOnly` and `SameSite=Strict`
+  - Add unit test: app fails to start without SESSION_SECRET when NODE_ENV=production
+  - Run full regression suite
+- **Gherkin Deltas:**
+  - New: `Scenario: Session cookie includes HttpOnly flag`
+  - New: `Scenario: Session cookie includes SameSite flag`
+  - Regression: 128 existing scenarios must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Revert app.js session/CSRF configuration to previous version
+- **Risk:** Low — cookie flags don't affect application logic, only transport security.
+
+---
+
+## Tier 2 — High
+
+### sec-003: Add Security Headers via Helmet
+
+- **Type:** security
+- **Tier:** 2 (High)
+- **Vulnerability:** No security headers set. Missing CSP, X-Content-Type-Options, X-Frame-Options, HSTS, Referrer-Policy, Permissions-Policy. (Finding SEC-003, CVSS 7.5)
+- **Scope:**
+  - `package.json` — Add `helmet` dependency.
+  - `src/app.js` — Add `app.use(helmet({...}))` after `const app = express()`. Configure CSP to allow Bootstrap CDN (`cdn.jsdelivr.net`).
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] Response headers include `Content-Security-Policy`
+  - [ ] Response headers include `X-Content-Type-Options: nosniff`
+  - [ ] Response headers include `X-Frame-Options: DENY`
+  - [ ] Response headers include `Referrer-Policy`
+  - [ ] Bootstrap CDN still loads (CSP allowlist works)
+  - [ ] All 128 existing tests pass
+- **Test Strategy:**
+  - Add integration test: GET / → verify security headers present in response
+  - Add integration test: verify Bootstrap CDN URL is allowed by CSP
+  - Run full regression suite
+- **Gherkin Deltas:**
+  - New: `Scenario: Responses include security headers`
+  - Regression: 128 existing scenarios must pass unchanged
+- **Dependencies:** sec-002 (cookie hardening should be in place first)
+- **Rollback Plan:** Remove helmet from app.js and package.json
+- **Risk:** Medium — CSP misconfiguration could break Bootstrap CDN loading. Test thoroughly.
+
+---
+
+### sec-004: Strengthen Password Validation Policy
+
+- **Type:** security
+- **Tier:** 2 (High)
+- **Vulnerability:** Password minimum is 6 characters with no complexity requirements. Passwords like "123456" are accepted. (Finding SEC-005, CVSS 7.2)
+- **Scope:**
+  - `src/middleware/validation.js:24` — Increase minimum to 8 characters. Add complexity rule (uppercase + lowercase + digit).
+  - `src/views/auth/register.ejs` — Update password field hint text.
+  - `seeds/seed.js` — Update seed passwords to meet new policy.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] Registration rejects passwords shorter than 8 characters
+  - [ ] Registration rejects passwords without uppercase letter
+  - [ ] Registration rejects passwords without lowercase letter
+  - [ ] Registration rejects passwords without digit
+  - [ ] Registration accepts compliant passwords (e.g., "Passw0rd123")
+  - [ ] Existing users can still log in (policy applies to new registrations only)
+  - [ ] All existing tests updated for new password policy pass
+- **Test Strategy:**
+  - Update validation integration tests for new password rules
+  - Add boundary tests: 7 chars rejected, 8 chars accepted, missing uppercase rejected
+  - Run full regression suite (update test fixtures using compliant passwords)
+- **Gherkin Deltas:**
+  - Modified: Existing validation tests — password minimum changes from 6 to 8
+  - New: `Scenario: Registration rejects password without uppercase`
+  - New: `Scenario: Registration rejects password without digit`
+  - Regression: All non-password tests must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Revert validation.js password rule to `isLength({ min: 6 })`
+- **Risk:** Medium — Requires updating test fixtures and seed data passwords. Existing users unaffected (login checks hash, not policy).
+
+---
+
+### sec-005: Fix IDOR — Verify Team Membership on Submission Creation
+
+- **Type:** security
+- **Tier:** 2 (High)
+- **Vulnerability:** `POST /hackathons/:id/submissions` accepts any `team_id` without verifying the user belongs to that team. (Finding SEC-007, CVSS 7.1)
+- **Scope:**
+  - `src/routes/submissions.js:34-45` — Before creating submission, verify the authenticated user is a participant of the specified team via `participantRepo`.
+  - `src/repositories/index.js` — Add `participantRepo.findByUserAndTeam(userId, teamId)` if not exists.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] Submission creation succeeds when user is a team member
+  - [ ] Submission creation returns 403 when user is NOT a team member
+  - [ ] Admin users can still submit for any team (admin bypass)
+  - [ ] All 128 existing tests pass (update submission-flow tests with proper team membership)
+- **Test Strategy:**
+  - Add integration test: authenticated user not in team → POST submission → 403
+  - Add integration test: authenticated user in team → POST submission → 302 redirect
+  - Update existing submission-flow tests to seed team membership
+  - Run full regression suite
+- **Gherkin Deltas:**
+  - New: `Scenario: Non-member cannot submit for a team`
+  - New: `Scenario: Team member can submit for their team`
+  - Modified: Existing submission creation tests — must seed team membership
+  - Regression: All non-submission tests must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Revert submissions.js route handler
+- **Risk:** Medium — Existing submission-flow tests will need team membership seeded. Careful with test data setup.
+
+---
+
+## Tier 3 — Medium
+
+### sec-006: Tighten CSRF Test Bypass
+
+- **Type:** security
+- **Tier:** 3 (Medium)
+- **Vulnerability:** CSRF protection disabled via `NODE_ENV !== 'test'`. If production runs with NODE_ENV=test, CSRF is completely bypassed. (Finding SEC-008)
+- **Scope:**
+  - `src/app.js:69-71` — Change condition from `NODE_ENV !== 'test'` to `!process.env.VITEST`.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] CSRF protection active when NODE_ENV=test but VITEST not set
+  - [ ] CSRF protection skipped only when VITEST environment variable is set
+  - [ ] All 128 existing tests pass (vitest sets VITEST automatically)
+- **Test Strategy:**
+  - Verify vitest sets `process.env.VITEST` automatically
+  - Run full regression suite
+- **Gherkin Deltas:**
+  - Regression: 128 existing scenarios must pass unchanged
+- **Dependencies:** sec-001, sec-002
+- **Rollback Plan:** Revert app.js CSRF conditional
+- **Risk:** Low — vitest automatically sets VITEST env var.
+
+---
+
+### sec-007: Refactor requireOwnerOrAdmin to Use Resource-Type Map
+
+- **Type:** security
+- **Tier:** 3 (Medium)
+- **Vulnerability:** `requireOwnerOrAdmin()` accepts raw SQL string parameter. Architectural risk — future developers may pass dynamic SQL. (Finding SEC-009)
+- **Scope:**
+  - `src/middleware/auth.js:25-51` — Replace SQL parameter with resource-type string. Map types to predefined queries internally.
+  - `src/routes/hackathons.js:54` — Change `requireOwnerOrAdmin('SELECT ...')` to `requireOwnerOrAdmin('hackathon')`.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] `requireOwnerOrAdmin('hackathon')` works identically to current SQL-based version
+  - [ ] Unknown resource type returns 500
+  - [ ] All 128 existing tests pass
+- **Test Strategy:**
+  - Existing auth-middleware tests already cover requireOwnerOrAdmin behavior
+  - Add unit test: unknown resource type → 500 error
+  - Run full regression suite
+- **Gherkin Deltas:**
+  - Regression: 128 existing scenarios must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Revert auth.js and hackathons.js
+- **Risk:** Low — behavior-preserving refactor.
+
+---
+
+### sec-008: Sanitize Error Responses in Route Handlers
+
+- **Type:** security
+- **Tier:** 3 (Medium)
+- **Vulnerability:** Route-level catch blocks pass full `err` object to `res.render('error', { error: err })`. In non-production, stack traces and SQL errors are exposed. (Finding SEC-010)
+- **Scope:**
+  - All route files (`src/routes/*.js`) — In catch blocks, pass only `{ status: err.status || 500 }` instead of full `err` object.
+  - `src/app.js:131-134` — Already handles production correctly, but align route-level handlers.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] Error responses in production contain no stack traces or file paths
+  - [ ] Error responses in development still show useful debug info
+  - [ ] All 128 existing tests pass
+- **Test Strategy:**
+  - Add integration test: trigger error → verify response body contains no file paths
+  - Run full regression suite
+- **Gherkin Deltas:**
+  - Regression: 128 existing scenarios must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Revert route catch blocks
+- **Risk:** Low — only changes error display, not business logic.
+
+---
+
+### sec-009: Expand Rate Limiting to Write Endpoints
+
+- **Type:** security
+- **Tier:** 3 (Medium)
+- **Vulnerability:** Rate limiting only on `/auth/login` and `/auth/register`. No limits on submission, team, or scoring endpoints. (Finding SEC-011)
+- **Scope:**
+  - `src/app.js` — Add general rate limiter (100 req/15min) and specific limiters for submission (10/hour) and scoring (50/hour) endpoints.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] General rate limit applies to all routes
+  - [ ] Submission endpoint has specific lower limit
+  - [ ] Scoring endpoint has specific lower limit
+  - [ ] Rate limiters skipped in test environment
+  - [ ] All 128 existing tests pass
+- **Test Strategy:**
+  - Run full regression suite (limiters skipped in test)
+  - Manual verification: verify rate limit headers in responses
+- **Gherkin Deltas:**
+  - Regression: 128 existing scenarios must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Remove new rate limiters from app.js
+- **Risk:** Low — additive change, existing limiters unchanged.
+
+---
+
+### sec-010: Remove Email from Public Endpoint Queries
+
+- **Type:** security
+- **Tier:** 3 (Medium)
+- **Vulnerability:** Participant and team-member SQL queries include `users.email`. These endpoints are publicly accessible, exposing PII. (Finding SEC-012)
+- **Scope:**
+  - `src/repositories/index.js` — Remove `users.email` from participant and team-member SELECT queries.
+  - `src/views/participants/index.ejs` — Remove email column from table if present.
+  - `src/views/teams/show.ejs` — Remove email from member list if present.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] GET /participants response contains no email addresses
+  - [ ] GET /teams/:id response contains no email addresses in member list
+  - [ ] All 128 existing tests pass (update any tests that assert on email presence)
+- **Test Strategy:**
+  - Add integration test: GET /participants → response body does not contain `@` email patterns
+  - Update existing tests if they assert on email display
+  - Run full regression suite
+- **Gherkin Deltas:**
+  - Modified: Existing participant/team tests — remove email assertions if present
+  - New: `Scenario: Public endpoints do not expose email addresses`
+  - Regression: All non-participant/team tests must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Revert repository queries and templates
+- **Risk:** Low — removing data from display, not adding.
+
+---
+
+### sec-011: Generic Registration Error Messages
+
+- **Type:** security
+- **Tier:** 3 (Medium)
+- **Vulnerability:** Registration error message "Username or email already exists" enables account enumeration. (Finding SEC-004)
+- **Scope:**
+  - `src/routes/auth.js:43-46` — Return generic error message for all registration failures.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] Duplicate username registration shows "Registration failed. Please try again."
+  - [ ] Duplicate email registration shows same generic message
+  - [ ] Other registration errors show same generic message
+  - [ ] All 128 existing tests pass (update tests that assert on "already exists" message)
+- **Test Strategy:**
+  - Update auth-flow duplicate test to assert on generic message
+  - Run full regression suite
+- **Gherkin Deltas:**
+  - Modified: `Scenario: currently shows error for duplicate username` — error message changes
+  - Regression: All non-auth tests must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Revert auth.js error handling
+- **Risk:** Low — only changes error message text.
+
+---
+
+## Tier 4 — Low
+
+### sec-012: Add Server-Side Password Confirmation Validation
+
+- **Type:** security
+- **Tier:** 4 (Low)
+- **Vulnerability:** Password confirmation validated only client-side (jQuery). Server accepts mismatched passwords. (Finding SEC-013)
+- **Scope:**
+  - `src/middleware/validation.js` — Add `body('confirm_password').custom()` to `registerRules`.
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] Registration rejects when confirm_password !== password
+  - [ ] Registration succeeds when passwords match
+  - [ ] All 128 existing tests pass (update registration tests to include confirm_password)
+- **Test Strategy:**
+  - Add validation test: mismatched confirm_password → 400
+  - Update registration tests to send confirm_password field
+  - Run full regression suite
+- **Gherkin Deltas:**
+  - New: `Scenario: Registration rejects mismatched password confirmation`
+  - Modified: Existing registration tests — add confirm_password field
+  - Regression: All non-registration tests must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Remove confirm_password rule from registerRules
+- **Risk:** Low — additive validation. Existing form already has confirm_password field.
+
+---
+
+### sec-013: HTTPS Enforcement Middleware
+
+- **Type:** security
+- **Tier:** 4 (Low)
+- **Vulnerability:** No HTTP→HTTPS redirect or HSTS enforcement in application code. (Finding SEC-014)
+- **Scope:**
+  - `src/app.js` — Add HTTPS redirect middleware for production (check `x-forwarded-proto` header).
+  - Note: HSTS header addressed by sec-003 (helmet).
+  - No other changes.
+- **Acceptance Criteria:**
+  - [ ] In production, HTTP requests redirect to HTTPS (301)
+  - [ ] In development, HTTP requests work normally
+  - [ ] All 128 existing tests pass
+- **Test Strategy:**
+  - Run full regression suite
+  - Manual verification: test with production NODE_ENV
+- **Gherkin Deltas:**
+  - Regression: 128 existing scenarios must pass unchanged
+- **Dependencies:** none
+- **Rollback Plan:** Remove HTTPS redirect middleware
+- **Risk:** Low — only active in production. No effect on development or tests.
+
+---
+
+## Security Increment Summary
+
+| ID | Title | Tier | Finding | Dependencies | Risk |
+|---|---|---|---|---|---|
+| sec-001 | Block Privilege Escalation | 1 (Critical) | SEC-001 | none | Low |
+| sec-002 | Harden Session Cookies | 1 (Critical) | SEC-002 | none | Low |
+| sec-003 | Security Headers via Helmet | 2 (High) | SEC-003 | sec-002 | Medium |
+| sec-004 | Strengthen Password Policy | 2 (High) | SEC-005 | none | Medium |
+| sec-005 | Fix Submission IDOR | 2 (High) | SEC-007 | none | Medium |
+| sec-006 | Tighten CSRF Bypass | 3 (Medium) | SEC-008 | sec-001, sec-002 | Low |
+| sec-007 | Refactor Owner-Check Middleware | 3 (Medium) | SEC-009 | none | Low |
+| sec-008 | Sanitize Error Responses | 3 (Medium) | SEC-010 | none | Low |
+| sec-009 | Expand Rate Limiting | 3 (Medium) | SEC-011 | none | Low |
+| sec-010 | Remove Email from Public Queries | 3 (Medium) | SEC-012 | none | Low |
+| sec-011 | Generic Registration Errors | 3 (Medium) | SEC-004 | none | Low |
+| sec-012 | Server-Side Password Confirmation | 4 (Low) | SEC-013 | none | Low |
+| sec-013 | HTTPS Enforcement | 4 (Low) | SEC-014 | none | Low |
+
+**13 security increments covering all 13 findings.** All Tier 1 findings addressed in first 2 increments.
