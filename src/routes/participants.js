@@ -1,44 +1,27 @@
-var express = require('express');
-var router = express.Router();
-var database = require('../config/database');
-var auth = require('../middleware/auth');
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const participantService = require('../services/participantService');
+const logger = require('../utils/logger');
 
 /* GET all participants */
-router.get('/participants', function(req, res) {
-  const db = database.getDb();
-
+router.get('/participants', (req, res) => {
   try {
-    const participants = db.prepare(
-      'SELECT participants.*, users.username, users.email, hackathons.name as hackathon_name, teams.name as team_name ' +
-      'FROM participants ' +
-      'LEFT JOIN users ON participants.user_id = users.id ' +
-      'LEFT JOIN hackathons ON participants.hackathon_id = hackathons.id ' +
-      'LEFT JOIN teams ON participants.team_id = teams.id ' +
-      'ORDER BY participants.registered_at DESC'
-    ).all();
-
-    res.render('participants/index', { participants: participants });
+    const participants = participantService.getAll();
+    res.render('participants/index', { participants });
   } catch (err) {
-    console.error('Error fetching participants:', err);
+    logger.error({ err }, 'Error fetching participants');
     res.render('error', { message: 'Error loading participants', error: err });
   }
 });
 
 /* POST join a hackathon */
-router.post('/hackathons/:hackathonId/participants/join', auth.requireAuth, function(req, res) {
-  const db = database.getDb();
-  const hackathonId = req.params.hackathonId;
-  const userId = req.session.user.id;
-  const teamId = req.body.team_id || null;
-
+router.post('/hackathons/:hackathonId/participants/join', auth.requireAuth, (req, res) => {
   try {
-    db.prepare(
-      'INSERT INTO participants (user_id, team_id, hackathon_id, role) VALUES (?, ?, ?, ?)'
-    ).run(userId, teamId, hackathonId, 'member');
-
-    res.redirect('/hackathons/' + hackathonId);
+    participantService.join(req.session.user.id, req.body.team_id || null, req.params.hackathonId);
+    res.redirect('/hackathons/' + req.params.hackathonId);
   } catch (err) {
-    console.error('Error joining hackathon:', err);
+    logger.error({ err }, 'Error joining hackathon');
     res.render('error', { message: 'Error joining hackathon', error: err });
   }
 });

@@ -1,21 +1,25 @@
-var Database = require('better-sqlite3');
-var path = require('path');
-var fs = require('fs');
+const Database = require('better-sqlite3');
+const path = require('path');
+const fs = require('fs');
+const logger = require('../utils/logger');
 
-var db = null;
+let db = null;
 
 function initDatabase() {
   // Ensure data directory exists
-  var dataDir = path.join(__dirname, '..', '..', 'data');
+  const dbPath = process.env.DATABASE_PATH || path.join(__dirname, '..', '..', 'data', 'hackathon.db');
+  const dataDir = path.dirname(dbPath);
   if (!fs.existsSync(dataDir)) {
     fs.mkdirSync(dataDir, { recursive: true });
   }
 
-  var dbPath = path.join(dataDir, 'hackathon.db');
   db = new Database(dbPath);
 
   // Enable WAL mode for better performance
   db.pragma('journal_mode = WAL');
+
+  // Enable foreign key enforcement
+  db.pragma('foreign_keys = ON');
 
   // Create tables
   db.exec(`
@@ -91,7 +95,7 @@ function initDatabase() {
     );
   `);
 
-  console.log('Database initialized successfully');
+  logger.info('Database initialized successfully');
   return db;
 }
 

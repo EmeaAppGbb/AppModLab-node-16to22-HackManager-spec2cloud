@@ -270,6 +270,19 @@ AppModLab-node-16to22-HackManager-spec2cloud/
 │   │   ├── submissions.js       #     Project submissions
 │   │   ├── judging.js           #     Scoring and judging
 │   │   └── index.js             #     Dashboard / home
+│   ├── services/                #   Business logic layer
+│   │   ├── authService.js       #     Authentication (async bcrypt)
+│   │   ├── hackathonService.js  #     Hackathon operations
+│   │   ├── teamService.js       #     Team operations
+│   │   ├── participantService.js#     Participant operations
+│   │   ├── submissionService.js #     Submission operations
+│   │   ├── judgingService.js    #     Judging/scoring operations
+│   │   └── dashboardService.js  #     Dashboard statistics
+│   ├── repositories/            #   Data access layer
+│   │   └── index.js             #     All entity repositories
+│   ├── utils/                   #   Shared utilities
+│   │   ├── dates.js             #     Date formatting (date-fns)
+│   │   └── logger.js            #     Structured logging (pino)
 │   ├── views/                   #   EJS templates
 │   │   ├── layout/              #     Header & footer partials
 │   │   ├── auth/                #     Login & register views
@@ -279,9 +292,18 @@ AppModLab-node-16to22-HackManager-spec2cloud/
 │   │   ├── judging/             #     Judging views
 │   │   └── participants/        #     Participant views
 │   └── public/                  #   Static assets (CSS, JS)
+├── tests/                       #   Test suite (vitest + supertest)
+│   ├── setup.js                 #     Test environment setup
+│   ├── app.test.js              #     Integration tests
+│   ├── repositories.test.js     #     Repository unit tests
+│   └── utils.test.js            #     Utility unit tests
 ├── seeds/
 │   └── seed.js                  #   Database seed script
 ├── data/                        #   SQLite database (auto-created)
+├── .env.example                 #   Environment variable template
+├── Dockerfile                   #   Container image definition
+├── eslint.config.cjs            #   ESLint 9 flat config
+├── vitest.config.js             #   Test configuration
 ├── package.json                 #   Dependencies and scripts
 ├── DEVELOPER_GUIDE.md           #   This file
 └── README.md                    #   Workshop walkthrough

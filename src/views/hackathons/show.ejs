@@ -12,6 +12,7 @@
       <div>
         <a href="/hackathons/<%= hackathon.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
         <form action="/hackathons/<%= hackathon.id %>/delete" method="POST" class="d-inline delete-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
           <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
         </form>
       </div>
@@ -43,6 +44,7 @@
 <!-- Join Hackathon -->
 <% if (typeof user !== 'undefined' && user) { %>
   <form action="/hackathons/<%= hackathon.id %>/participants/join" method="POST" class="mb-4">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <button type="submit" class="btn btn-success">Join Hackathon</button>
   </form>
 <% } %>

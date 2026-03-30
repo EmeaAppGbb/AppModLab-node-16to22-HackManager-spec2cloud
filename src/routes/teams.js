@@ -1,86 +1,60 @@
-var express = require('express');
-var router = express.Router();
-var database = require('../config/database');
-var auth = require('../middleware/auth');
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const { teamRules, handleValidationErrors } = require('../middleware/validation');
+const teamService = require('../services/teamService');
+const logger = require('../utils/logger');
 
 /* GET all teams */
-router.get('/teams', function(req, res) {
-  const db = database.getDb();
-
+router.get('/teams', (req, res) => {
   try {
-    const teams = db.prepare(
-      'SELECT teams.*, hackathons.name as hackathon_name FROM teams LEFT JOIN hackathons ON teams.hackathon_id = hackathons.id ORDER BY teams.created_at DESC'
-    ).all();
-
-    res.render('teams/index', { teams: teams });
+    const teams = teamService.getAll();
+    res.render('teams/index', { teams });
   } catch (err) {
-    console.error('Error fetching teams:', err);
+    logger.error({ err }, 'Error fetching teams');
     res.render('error', { message: 'Error loading teams', error: err });
   }
 });
 
 /* GET new team form for a hackathon */
-router.get('/hackathons/:hackathonId/teams/new', auth.requireAuth, function(req, res) {
-  const db = database.getDb();
-  const hackathonId = req.params.hackathonId;
-
+router.get('/hackathons/:hackathonId/teams/new', auth.requireAuth, (req, res) => {
   try {
-    const hackathon = db.prepare('SELECT * FROM hackathons WHERE id = ?').get(hackathonId);
-
+    const hackathon = teamService.getNewTeamForm(req.params.hackathonId);
     if (!hackathon) {
       return res.status(404).render('error', { message: 'Hackathon not found', error: { status: 404 } });
     }
-
-    res.render('teams/new', { hackathon: hackathon });
+    res.render('teams/new', { hackathon });
   } catch (err) {
-    console.error('Error loading new team form:', err);
+    logger.error({ err }, 'Error loading new team form');
     res.render('error', { message: 'Error loading form', error: err });
   }
 });
 
 /* POST create team for a hackathon */
-router.post('/hackathons/:hackathonId/teams', auth.requireAuth, function(req, res) {
+router.post('/hackathons/:hackathonId/teams', auth.requireAuth, teamRules, handleValidationErrors, (req, res) => {
   const { name, project_name, project_description, repo_url } = req.body;
-  const db = database.getDb();
-  const hackathonId = req.params.hackathonId;
 
   try {
-    const result = db.prepare(
-      'INSERT INTO teams (name, hackathon_id, project_name, project_description, repo_url) VALUES (?, ?, ?, ?, ?)'
-    ).run(name, hackathonId, project_name, project_description, repo_url);
-
+    const result = teamService.create({
+      name, hackathon_id: req.params.hackathonId, project_name, project_description, repo_url,
+    });
     res.redirect('/teams/' + result.lastInsertRowid);
   } catch (err) {
-    console.error('Error creating team:', err);
+    logger.error({ err }, 'Error creating team');
     res.render('error', { message: 'Error creating team', error: err });
   }
 });
 
 /* GET single team */
-router.get('/teams/:id', function(req, res) {
-  const db = database.getDb();
-  const id = req.params.id;
-
+router.get('/teams/:id', (req, res) => {
   try {
-    const team = db.prepare('SELECT * FROM teams WHERE id = ?').get(id);
-
-    if (!team) {
+    const data = teamService.getById(req.params.id);
+    if (!data) {
       return res.status(404).render('error', { message: 'Team not found', error: { status: 404 } });
     }
-
-    const members = db.prepare(
-      'SELECT participants.*, users.username, users.email FROM participants JOIN users ON participants.user_id = users.id WHERE participants.team_id = ?'
-    ).all(id);
-
-    const hackathon = db.prepare('SELECT * FROM hackathons WHERE id = ?').get(team.hackathon_id);
-
-    res.render('teams/show', {
-      team: team,
-      members: members,
-      hackathon: hackathon
-    });
+    res.render('teams/show', data);
   } catch (err) {
-    console.error('Error fetching team:', err);
+    logger.error({ err }, 'Error fetching team');
     res.render('error', { message: 'Error loading team', error: err });
   }
 });

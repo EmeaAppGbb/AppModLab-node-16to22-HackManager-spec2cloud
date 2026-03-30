@@ -1,77 +1,58 @@
-var express = require('express');
-var router = express.Router();
-var bcrypt = require('bcryptjs');
-var database = require('../config/database');
+const express = require('express');
+const router = express.Router();
+const authService = require('../services/authService');
+const { loginRules, registerRules, handleValidationErrors } = require('../middleware/validation');
+const logger = require('../utils/logger');
 
 /* GET login page */
-router.get('/login', function(req, res) {
+router.get('/login', (req, res) => {
   res.render('auth/login', { error: req.query.error || null });
 });
 
 /* POST login */
-router.post('/login', function(req, res) {
+router.post('/login', loginRules, handleValidationErrors, async (req, res) => {
   const { username, password } = req.body;
-  const db = database.getDb();
 
   try {
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
-
+    const user = await authService.authenticate(username, password);
     if (!user) {
       return res.render('auth/login', { error: 'Invalid username or password' });
     }
-
-    if (!bcrypt.compareSync(password, user.password)) {
-      return res.render('auth/login', { error: 'Invalid username or password' });
-    }
-
-    req.session.user = {
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      role: user.role
-    };
-
+    req.session.user = user;
     res.redirect('/');
   } catch (err) {
-    console.error('Login error:', err);
+    logger.error({ err }, 'Login error');
     res.render('auth/login', { error: 'An error occurred during login' });
   }
 });
 
 /* GET register page */
-router.get('/register', function(req, res) {
+router.get('/register', (req, res) => {
   res.render('auth/register', { error: null });
 });
 
 /* POST register */
-router.post('/register', function(req, res) {
+router.post('/register', registerRules, handleValidationErrors, async (req, res) => {
   const { username, email, password, role } = req.body;
-  const db = database.getDb();
 
   try {
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    const userRole = role || 'participant';
-
-    db.prepare(
-      'INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)'
-    ).run(username, email, hashedPassword, userRole);
-
+    await authService.register(username, email, password, role);
     res.redirect('/auth/login');
   } catch (err) {
-    console.error('Registration error:', err);
-    let errorMsg = 'An error occurred during registration';
-    if (err.message && err.message.includes('UNIQUE constraint')) {
-      errorMsg = 'Username or email already exists';
-    }
+    logger.error({ err }, 'Registration error');
+    const errorMsg =
+      err.message && err.message.includes('UNIQUE constraint')
+        ? 'Username or email already exists'
+        : 'An error occurred during registration';
     res.render('auth/register', { error: errorMsg });
   }
 });
 
 /* GET logout */
-router.get('/logout', function(req, res) {
-  req.session.destroy(function(err) {
+router.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
     if (err) {
-      console.error('Logout error:', err);
+      logger.error({ err }, 'Logout error');
     }
     res.redirect('/');
   });

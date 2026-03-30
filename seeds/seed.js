@@ -1,16 +1,16 @@
-var Database = require('better-sqlite3');
-var bcrypt = require('bcryptjs');
-var path = require('path');
-var fs = require('fs');
+const Database = require('better-sqlite3');
+const bcrypt = require('bcryptjs');
+const path = require('path');
+const fs = require('fs');
 
 // Ensure data directory exists
-var dataDir = path.join(__dirname, '..', 'data');
+const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-var dbPath = path.join(dataDir, 'hackathon.db');
-var db = new Database(dbPath);
+const dbPath = path.join(dataDir, 'hackathon.db');
+const db = new Database(dbPath);
 
 // Enable WAL mode and foreign keys
 db.pragma('journal_mode = WAL');
@@ -111,12 +111,12 @@ db.exec(`
 
 console.log('Seeding users...');
 
-var insertUser = db.prepare(`
+const insertUser = db.prepare(`
   INSERT INTO users (username, email, password, role)
   VALUES (@username, @email, @password, @role)
 `);
 
-var users = [
+const users = [
   { username: 'admin', email: 'admin@hackmanager.com', password: bcrypt.hashSync('admin123', 10), role: 'admin' },
   { username: 'judge_sarah', email: 'sarah@example.com', password: bcrypt.hashSync('judge123', 10), role: 'judge' },
   { username: 'judge_mike', email: 'mike@example.com', password: bcrypt.hashSync('judge123', 10), role: 'judge' },
@@ -127,7 +127,7 @@ var users = [
   { username: 'eve_builder', email: 'eve@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' }
 ];
 
-var insertUsers = db.transaction(function (items) {
+const insertUsers = db.transaction((items) => {
   for (let i = 0; i < items.length; i++) {
     insertUser.run(items[i]);
   }
@@ -140,12 +140,12 @@ console.log('  -> ' + users.length + ' users inserted');
 
 console.log('Seeding hackathons...');
 
-var insertHackathon = db.prepare(`
+const insertHackathon = db.prepare(`
   INSERT INTO hackathons (name, description, start_date, end_date, location, max_teams, status, created_by)
   VALUES (@name, @description, @start_date, @end_date, @location, @max_teams, @status, @created_by)
 `);
 
-var hackathons = [
+const hackathons = [
   {
     name: 'AI Innovation Challenge 2023',
     description: 'Push the boundaries of artificial intelligence! Build innovative AI-powered solutions that solve real-world problems. Open to all skill levels.',
@@ -178,7 +178,7 @@ var hackathons = [
   }
 ];
 
-var insertHackathons = db.transaction(function (items) {
+const insertHackathons = db.transaction((items) => {
   for (let i = 0; i < items.length; i++) {
     insertHackathon.run(items[i]);
   }
@@ -191,12 +191,12 @@ console.log('  -> ' + hackathons.length + ' hackathons inserted');
 
 console.log('Seeding teams...');
 
-var insertTeam = db.prepare(`
+const insertTeam = db.prepare(`
   INSERT INTO teams (name, hackathon_id, project_name, project_description, repo_url)
   VALUES (@name, @hackathon_id, @project_name, @project_description, @repo_url)
 `);
 
-var teams = [
+const teams = [
   {
     name: 'Neural Nexus',
     hackathon_id: 1,
@@ -234,7 +234,7 @@ var teams = [
   }
 ];
 
-var insertTeams = db.transaction(function (items) {
+const insertTeams = db.transaction((items) => {
   for (let i = 0; i < items.length; i++) {
     insertTeam.run(items[i]);
   }
@@ -247,12 +247,12 @@ console.log('  -> ' + teams.length + ' teams inserted');
 
 console.log('Seeding participants...');
 
-var insertParticipant = db.prepare(`
+const insertParticipant = db.prepare(`
   INSERT INTO participants (user_id, team_id, hackathon_id, role)
   VALUES (@user_id, @team_id, @hackathon_id, @role)
 `);
 
-var participants = [
+const participants = [
   // Hackathon 1 — Neural Nexus
   { user_id: 4, team_id: 1, hackathon_id: 1, role: 'leader' },   // alice_dev
   { user_id: 5, team_id: 1, hackathon_id: 1, role: 'member' },   // bob_coder
@@ -270,7 +270,7 @@ var participants = [
   { user_id: 8, team_id: 5, hackathon_id: 3, role: 'member' }    // eve_builder
 ];
 
-var insertParticipants = db.transaction(function (items) {
+const insertParticipants = db.transaction((items) => {
   for (let i = 0; i < items.length; i++) {
     insertParticipant.run(items[i]);
   }
@@ -283,12 +283,12 @@ console.log('  -> ' + participants.length + ' participants inserted');
 
 console.log('Seeding submissions...');
 
-var insertSubmission = db.prepare(`
+const insertSubmission = db.prepare(`
   INSERT INTO submissions (team_id, hackathon_id, title, description, demo_url, repo_url, submitted_at)
   VALUES (@team_id, @hackathon_id, @title, @description, @demo_url, @repo_url, @submitted_at)
 `);
 
-var submissions = [
+const submissions = [
   {
     team_id: 1,
     hackathon_id: 1,
@@ -318,7 +318,7 @@ var submissions = [
   }
 ];
 
-var insertSubmissions = db.transaction(function (items) {
+const insertSubmissions = db.transaction((items) => {
   for (let i = 0; i < items.length; i++) {
     insertSubmission.run(items[i]);
   }
@@ -331,17 +331,17 @@ console.log('  -> ' + submissions.length + ' submissions inserted');
 
 console.log('Seeding judges...');
 
-var insertJudge = db.prepare(`
+const insertJudge = db.prepare(`
   INSERT INTO judges (user_id, hackathon_id)
   VALUES (@user_id, @hackathon_id)
 `);
 
-var judgeRecords = [
+const judgeRecords = [
   { user_id: 2, hackathon_id: 1 },  // judge_sarah for AI Innovation Challenge
   { user_id: 3, hackathon_id: 1 }   // judge_mike for AI Innovation Challenge
 ];
 
-var insertJudges = db.transaction(function (items) {
+const insertJudges = db.transaction((items) => {
   for (let i = 0; i < items.length; i++) {
     insertJudge.run(items[i]);
   }
@@ -354,12 +354,12 @@ console.log('  -> ' + judgeRecords.length + ' judges inserted');
 
 console.log('Seeding scores...');
 
-var insertScore = db.prepare(`
+const insertScore = db.prepare(`
   INSERT INTO scores (submission_id, judge_id, innovation, technical, presentation, impact, overall, comments, scored_at)
   VALUES (@submission_id, @judge_id, @innovation, @technical, @presentation, @impact, @overall, @comments, @scored_at)
 `);
 
-var scores = [
+const scores = [
   // Judge Sarah (judge_id=1) scores for submission 1 (Neural Nexus)
   {
     submission_id: 1,
@@ -410,7 +410,7 @@ var scores = [
   }
 ];
 
-var insertScores = db.transaction(function (items) {
+const insertScores = db.transaction((items) => {
   for (let i = 0; i < items.length; i++) {
     insertScore.run(items[i]);
   }

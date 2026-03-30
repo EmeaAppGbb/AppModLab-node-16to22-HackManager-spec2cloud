@@ -13,6 +13,7 @@
 </div>
 
 <form action="/submissions/<%= submission.id %>/score" method="POST">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <div class="form-group">
     <label for="innovation">Innovation <span class="badge badge-primary score-value" id="innovationVal">5</span></label>
     <input type="range" class="custom-range score-range" id="innovation" name="innovation" min="1" max="10" value="5" data-display="innovationVal">
@@ -39,7 +40,7 @@
   </div>
 
   <button type="submit" class="btn btn-primary">Submit Score</button>
-  <a href="/judging" class="btn btn-secondary ml-2">Cancel</a>
+  <a href="/judging" class="btn btn-secondary ms-2">Cancel</a>
 </form>
 
 <%- include('../layout/footer') %>
