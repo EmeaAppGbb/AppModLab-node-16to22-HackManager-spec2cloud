@@ -1,0 +1,488 @@
+openapi: 3.0.3
+info:
+  title: HackManager API
+  description: >
+    Extracted API surface from the HackManager application.
+    This is a server-rendered MPA — all endpoints return HTML (EJS templates).
+    Form submissions use URL-encoded POST bodies. No JSON API exists.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+    description: Local development server
+
+tags:
+  - name: Dashboard
+    description: Homepage and statistics
+  - name: Authentication
+    description: Login, register, logout
+  - name: Hackathons
+    description: Hackathon CRUD operations
+  - name: Teams
+    description: Team management
+  - name: Participants
+    description: Participant registration
+  - name: Submissions
+    description: Project submissions
+  - name: Judging
+    description: Scoring and judging interface
+
+paths:
+  /:
+    get:
+      tags: [Dashboard]
+      summary: Dashboard / Homepage
+      description: Displays aggregate stats (total hackathons, teams, participants) and 3 most recent hackathons with formatted dates.
+      responses:
+        '200':
+          description: Rendered index.ejs with stats and recent hackathons
+        '500':
+          description: Error rendering dashboard
+
+  /auth/login:
+    get:
+      tags: [Authentication]
+      summary: Display login form
+      responses:
+        '200':
+          description: Rendered auth/login.ejs
+    post:
+      tags: [Authentication]
+      summary: Process login
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '302':
+          description: Redirect to / on success, or re-render login with error
+
+  /auth/register:
+    get:
+      tags: [Authentication]
+      summary: Display registration form
+      responses:
+        '200':
+          description: Rendered auth/register.ejs
+    post:
+      tags: [Authentication]
+      summary: Process registration
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [username, email, password]
+              properties:
+                username:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [participant, judge]
+                  default: participant
+      responses:
+        '302':
+          description: Redirect to /auth/login on success, or re-render register with error
+
+  /auth/logout:
+    get:
+      tags: [Authentication]
+      summary: Logout and destroy session
+      responses:
+        '302':
+          description: Redirect to /
+
+  /hackathons:
+    get:
+      tags: [Hackathons]
+      summary: List all hackathons
+      description: Returns all hackathons with formatted dates (moment.js MMM D, YYYY).
+      responses:
+        '200':
+          description: Rendered hackathons/list.ejs
+    post:
+      tags: [Hackathons]
+      summary: Create a new hackathon
+      security:
+        - session: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HackathonInput'
+      responses:
+        '302':
+          description: Redirect to /hackathons/:id on success
+
+  /hackathons/new:
+    get:
+      tags: [Hackathons]
+      summary: Display new hackathon form
+      security:
+        - session: []
+      responses:
+        '200':
+          description: Rendered hackathons/new.ejs
+
+  /hackathons/{id}:
+    get:
+      tags: [Hackathons]
+      summary: View single hackathon
+      description: Shows hackathon details with teams and submissions. Dates formatted with moment.js.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Rendered hackathons/show.ejs with teams and submissions
+        '404':
+          description: Hackathon not found
+
+  /hackathons/{id}/edit:
+    get:
+      tags: [Hackathons]
+      summary: Display edit hackathon form
+      security:
+        - session: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Rendered hackathons/edit.ejs
+        '404':
+          description: Hackathon not found
+
+  /hackathons/{id}/update:
+    post:
+      tags: [Hackathons]
+      summary: Update a hackathon
+      description: "WARNING: No ownership check — any authenticated user can update any hackathon."
+      security:
+        - session: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/HackathonInput'
+      responses:
+        '302':
+          description: Redirect to /hackathons/:id on success
+
+  /hackathons/{id}/delete:
+    post:
+      tags: [Hackathons]
+      summary: Delete a hackathon
+      description: "WARNING: No ownership check — any authenticated user can delete any hackathon."
+      security:
+        - session: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '302':
+          description: Redirect to /hackathons on success
+
+  /hackathons/{hackathonId}/teams/new:
+    get:
+      tags: [Teams]
+      summary: Display new team form for a hackathon
+      security:
+        - session: []
+      parameters:
+        - $ref: '#/components/parameters/HackathonId'
+      responses:
+        '200':
+          description: Rendered teams/new.ejs
+        '404':
+          description: Hackathon not found
+
+  /hackathons/{hackathonId}/teams:
+    post:
+      tags: [Teams]
+      summary: Create a team in a hackathon
+      security:
+        - session: []
+      parameters:
+        - $ref: '#/components/parameters/HackathonId'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TeamInput'
+      responses:
+        '302':
+          description: Redirect to /teams/:id on success
+
+  /teams:
+    get:
+      tags: [Teams]
+      summary: List all teams
+      description: Returns all teams with their hackathon names (LEFT JOIN).
+      responses:
+        '200':
+          description: Rendered teams/list.ejs
+
+  /teams/{id}:
+    get:
+      tags: [Teams]
+      summary: View single team
+      description: Shows team details with members (users via participants JOIN) and hackathon info.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Rendered teams/show.ejs with members
+        '404':
+          description: Team not found
+
+  /participants:
+    get:
+      tags: [Participants]
+      summary: List all participants
+      description: Returns all participants with user details, hackathon names, and team names (3-way JOIN).
+      responses:
+        '200':
+          description: Rendered participants/list.ejs
+
+  /hackathons/{hackathonId}/participants/join:
+    post:
+      tags: [Participants]
+      summary: Join a hackathon as participant
+      security:
+        - session: []
+      parameters:
+        - $ref: '#/components/parameters/HackathonId'
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                team_id:
+                  type: integer
+                  description: Optional — join a specific team
+                role:
+                  type: string
+                  default: member
+      responses:
+        '302':
+          description: Redirect to /hackathons/:hackathonId on success
+
+  /submissions:
+    get:
+      tags: [Submissions]
+      summary: List all submissions
+      description: Returns all submissions with team and hackathon names (LEFT JOINs).
+      responses:
+        '200':
+          description: Rendered submissions/list.ejs
+
+  /hackathons/{hackathonId}/submissions/new:
+    get:
+      tags: [Submissions]
+      summary: Display new submission form
+      security:
+        - session: []
+      parameters:
+        - $ref: '#/components/parameters/HackathonId'
+      responses:
+        '200':
+          description: Rendered submissions/new.ejs with hackathon details and teams
+        '404':
+          description: Hackathon not found
+
+  /hackathons/{hackathonId}/submissions:
+    post:
+      tags: [Submissions]
+      summary: Create a submission for a hackathon
+      security:
+        - session: []
+      parameters:
+        - $ref: '#/components/parameters/HackathonId'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SubmissionInput'
+      responses:
+        '302':
+          description: Redirect to /submissions/:id on success
+
+  /submissions/{id}:
+    get:
+      tags: [Submissions]
+      summary: View single submission
+      description: Shows submission details with all scores and judge information.
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Rendered submissions/show.ejs with scores
+        '404':
+          description: Submission not found
+
+  /judging:
+    get:
+      tags: [Judging]
+      summary: List all submissions available for judging
+      description: "WARNING: No authentication required — public access to judging list."
+      responses:
+        '200':
+          description: Rendered judging/list.ejs
+
+  /submissions/{id}/judge:
+    get:
+      tags: [Judging]
+      summary: Display scoring form for a submission
+      security:
+        - judgeRole: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      responses:
+        '200':
+          description: Rendered judging/score.ejs
+        '404':
+          description: Submission not found
+
+  /submissions/{id}/score:
+    post:
+      tags: [Judging]
+      summary: Submit scores for a submission
+      description: Auto-creates judge record if not existing for user+hackathon. Calculates overall as average of 4 scores.
+      security:
+        - judgeRole: []
+      parameters:
+        - $ref: '#/components/parameters/ResourceId'
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ScoreInput'
+      responses:
+        '302':
+          description: Redirect to /judging on success
+
+components:
+  parameters:
+    ResourceId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    HackathonId:
+      name: hackathonId
+      in: path
+      required: true
+      schema:
+        type: integer
+
+  schemas:
+    HackathonInput:
+      type: object
+      required: [name, start_date, end_date]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        location:
+          type: string
+        max_teams:
+          type: integer
+          default: 10
+        status:
+          type: string
+          enum: [upcoming, active, completed]
+          default: upcoming
+
+    TeamInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        project_name:
+          type: string
+        project_description:
+          type: string
+        repo_url:
+          type: string
+          format: uri
+
+    SubmissionInput:
+      type: object
+      required: [title, team_id]
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        demo_url:
+          type: string
+          format: uri
+        repo_url:
+          type: string
+          format: uri
+        team_id:
+          type: integer
+
+    ScoreInput:
+      type: object
+      required: [innovation, technical, presentation, impact]
+      properties:
+        innovation:
+          type: integer
+          minimum: 0
+          maximum: 10
+        technical:
+          type: integer
+          minimum: 0
+          maximum: 10
+        presentation:
+          type: integer
+          minimum: 0
+          maximum: 10
+        impact:
+          type: integer
+          minimum: 0
+          maximum: 10
+        comments:
+          type: string
+
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Express session cookie — requireAuth middleware
+    judgeRole:
+      type: apiKey
+      in: cookie
+      name: connect.sid
+      description: Express session cookie — requireJudge middleware (role must be judge or admin)
