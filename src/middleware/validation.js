@@ -28,8 +28,8 @@ const registerRules = [
 const hackathonRules = [
   body('name').trim().notEmpty().withMessage('Name is required').isLength({ max: 200 }).withMessage('Name too long'),
   body('description').trim().notEmpty().withMessage('Description is required'),
-  body('start_date').isISO8601().withMessage('Valid start date is required').toDate(),
-  body('end_date').isISO8601().withMessage('Valid end date is required').toDate(),
+  body('start_date').isISO8601().withMessage('Valid start date is required'),
+  body('end_date').isISO8601().withMessage('Valid end date is required'),
   body('location').trim().optional(),
   body('max_teams').optional().isInt({ min: 1 }).withMessage('Max teams must be a positive number').toInt(),
   body('status').optional().isIn(['upcoming', 'active', 'completed']).withMessage('Invalid status'),

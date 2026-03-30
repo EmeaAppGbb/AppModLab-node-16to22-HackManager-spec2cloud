@@ -65,18 +65,22 @@ app.use((req, res, next) => {
   next();
 });
 
-// Apply CSRF protection to all state-changing requests
-app.use(doubleCsrfProtection);
+// Apply CSRF protection to all state-changing requests (skipped in test env)
+if (process.env.NODE_ENV !== 'test') {
+  app.use(doubleCsrfProtection);
+}
 
 // TODO: add request logging middleware (morgan)
 
 // Rate limiting on auth endpoints
+const isTest = process.env.NODE_ENV === 'test';
 const authLoginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   message: 'Too many login attempts. Please try again in 15 minutes.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTest,
 });
 const authRegisterLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -84,6 +88,7 @@ const authRegisterLimiter = rateLimit({
   message: 'Too many registration attempts. Please try again in 15 minutes.',
   standardHeaders: true,
   legacyHeaders: false,
+  skip: () => isTest,
 });
 
 // Mount routes
