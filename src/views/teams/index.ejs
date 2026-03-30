@@ -1,0 +1,32 @@
+<%- include('../layout/header') %>
+
+<h2 class="mb-4">All Teams</h2>
+
+<% if (teams && teams.length > 0) { %>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead class="thead-dark">
+        <tr>
+          <th>Team Name</th>
+          <th>Project</th>
+          <th>Hackathon</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% teams.forEach(function(t) { %>
+          <tr>
+            <td><%= t.name %></td>
+            <td><%= t.project_name %></td>
+            <td><%= t.hackathon_name %></td>
+            <td><a href="/teams/<%= t.id %>" class="btn btn-sm btn-outline-primary">View</a></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+<% } else { %>
+  <div class="alert alert-info">No teams found.</div>
+<% } %>
+
+<%- include('../layout/footer') %>

@@ -1,0 +1,29 @@
+<%- include('../layout/header') %>
+
+<h2 class="mb-4">All Submissions</h2>
+
+<% if (submissions && submissions.length > 0) { %>
+  <div class="row">
+    <% submissions.forEach(function(s) { %>
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-body">
+            <h5 class="card-title"><%= s.title %></h5>
+            <p class="card-text">
+              <strong>Team:</strong> <%= s.team_name %><br>
+              <strong>Hackathon:</strong> <%= s.hackathon_name %>
+            </p>
+            <p class="card-text"><small class="text-muted">Submitted: <%= s.submitted_at %></small></p>
+          </div>
+          <div class="card-footer">
+            <a href="/submissions/<%= s.id %>" class="btn btn-sm btn-outline-primary">View</a>
+          </div>
+        </div>
+      </div>
+    <% }); %>
+  </div>
+<% } else { %>
+  <div class="alert alert-info">No submissions found.</div>
+<% } %>
+
+<%- include('../layout/footer') %>

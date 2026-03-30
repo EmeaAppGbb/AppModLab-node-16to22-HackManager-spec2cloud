@@ -1,0 +1,49 @@
+<%- include('../layout/header') %>
+
+<div class="mb-4">
+  <h2><%= team.name %></h2>
+  <p class="text-muted">
+    Part of hackathon: <a href="/hackathons/<%= hackathon.id %>"><%= hackathon.name %></a>
+  </p>
+</div>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title">Project: <%= team.project_name %></h5>
+    <p class="card-text"><%= team.project_description %></p>
+    <% if (team.repo_url) { %>
+      <p><strong>Repository:</strong> <a href="<%= team.repo_url %>" target="_blank" rel="noopener"><%= team.repo_url %></a></p>
+    <% } %>
+  </div>
+</div>
+
+<h4 class="mb-3">Team Members</h4>
+
+<% if (members && members.length > 0) { %>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead class="thead-light">
+        <tr>
+          <th>Username</th>
+          <th>Role</th>
+          <th>Registered At</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% members.forEach(function(m) { %>
+          <tr>
+            <td><%= m.username %></td>
+            <td><%= m.role %></td>
+            <td><%= m.registered_at %></td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+<% } else { %>
+  <p class="text-muted">No members yet.</p>
+<% } %>
+
+<a href="/teams" class="btn btn-outline-secondary">&larr; Back to Teams</a>
+
+<%- include('../layout/footer') %>

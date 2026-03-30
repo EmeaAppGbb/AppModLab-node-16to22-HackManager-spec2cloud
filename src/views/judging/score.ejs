@@ -1,0 +1,45 @@
+<%- include('../layout/header') %>
+
+<h2 class="mb-4">Score Submission</h2>
+
+<div class="card mb-4">
+  <div class="card-body">
+    <h5 class="card-title"><%= submission.title %></h5>
+    <p class="card-text"><%= submission.description %></p>
+    <p class="card-text text-muted">
+      Team: <%= submission.team_name %> | Hackathon: <%= submission.hackathon_name %>
+    </p>
+  </div>
+</div>
+
+<form action="/submissions/<%= submission.id %>/score" method="POST">
+  <div class="form-group">
+    <label for="innovation">Innovation <span class="badge badge-primary score-value" id="innovationVal">5</span></label>
+    <input type="range" class="custom-range score-range" id="innovation" name="innovation" min="1" max="10" value="5" data-display="innovationVal">
+  </div>
+
+  <div class="form-group">
+    <label for="technical">Technical <span class="badge badge-primary score-value" id="technicalVal">5</span></label>
+    <input type="range" class="custom-range score-range" id="technical" name="technical" min="1" max="10" value="5" data-display="technicalVal">
+  </div>
+
+  <div class="form-group">
+    <label for="presentation">Presentation <span class="badge badge-primary score-value" id="presentationVal">5</span></label>
+    <input type="range" class="custom-range score-range" id="presentation" name="presentation" min="1" max="10" value="5" data-display="presentationVal">
+  </div>
+
+  <div class="form-group">
+    <label for="impact">Impact <span class="badge badge-primary score-value" id="impactVal">5</span></label>
+    <input type="range" class="custom-range score-range" id="impact" name="impact" min="1" max="10" value="5" data-display="impactVal">
+  </div>
+
+  <div class="form-group">
+    <label for="comments">Comments</label>
+    <textarea class="form-control" id="comments" name="comments" rows="4" placeholder="Provide feedback for the team"></textarea>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Submit Score</button>
+  <a href="/judging" class="btn btn-secondary ml-2">Cancel</a>
+</form>
+
+<%- include('../layout/footer') %>

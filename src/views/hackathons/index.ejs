@@ -1,0 +1,49 @@
+<%- include('../layout/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>All Hackathons</h2>
+  <% if (typeof user !== 'undefined' && user) { %>
+    <a href="/hackathons/new" class="btn btn-primary">Create New</a>
+  <% } %>
+</div>
+
+<% if (hackathons && hackathons.length > 0) { %>
+  <div class="table-responsive">
+    <table class="table table-hover">
+      <thead class="thead-dark">
+        <tr>
+          <th>Name</th>
+          <th>Location</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Max Teams</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% hackathons.forEach(function(h) { %>
+          <tr>
+            <td><%= h.name %></td>
+            <td><%= h.location %></td>
+            <td><%= h.start_date %></td>
+            <td><%= h.end_date %></td>
+            <td><%= h.max_teams %></td>
+            <td>
+              <span class="badge badge-<%= h.status === 'active' ? 'success' : (h.status === 'upcoming' ? 'info' : 'secondary') %>">
+                <%= h.status %>
+              </span>
+            </td>
+            <td>
+              <a href="/hackathons/<%= h.id %>" class="btn btn-sm btn-outline-primary">View</a>
+            </td>
+          </tr>
+        <% }); %>
+      </tbody>
+    </table>
+  </div>
+<% } else { %>
+  <div class="alert alert-info">No hackathons found. Create one to get started!</div>
+<% } %>
+
+<%- include('../layout/footer') %>

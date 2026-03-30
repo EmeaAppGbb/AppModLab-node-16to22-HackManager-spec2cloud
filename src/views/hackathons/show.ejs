@@ -1,0 +1,126 @@
+<%- include('../layout/header') %>
+
+<div class="mb-4">
+  <div class="d-flex justify-content-between align-items-start">
+    <div>
+      <h2><%= hackathon.name %></h2>
+      <span class="badge badge-<%= hackathon.status === 'active' ? 'success' : (hackathon.status === 'upcoming' ? 'info' : 'secondary') %> mb-2">
+        <%= hackathon.status %>
+      </span>
+    </div>
+    <% if (typeof user !== 'undefined' && user) { %>
+      <div>
+        <a href="/hackathons/<%= hackathon.id %>/edit" class="btn btn-sm btn-outline-secondary">Edit</a>
+        <form action="/hackathons/<%= hackathon.id %>/delete" method="POST" class="d-inline delete-form">
+          <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+        </form>
+      </div>
+    <% } %>
+  </div>
+
+  <p class="mt-3"><%= hackathon.description %></p>
+
+  <div class="row mt-3">
+    <div class="col-md-4">
+      <strong>Start Date:</strong> <%= hackathon.start_date %>
+    </div>
+    <div class="col-md-4">
+      <strong>End Date:</strong> <%= hackathon.end_date %>
+    </div>
+    <div class="col-md-4">
+      <strong>Location:</strong> <%= hackathon.location %>
+    </div>
+  </div>
+  <div class="row mt-2">
+    <div class="col-md-4">
+      <strong>Max Teams:</strong> <%= hackathon.max_teams %>
+    </div>
+  </div>
+</div>
+
+<hr>
+
+<!-- Join Hackathon -->
+<% if (typeof user !== 'undefined' && user) { %>
+  <form action="/hackathons/<%= hackathon.id %>/participants/join" method="POST" class="mb-4">
+    <button type="submit" class="btn btn-success">Join Hackathon</button>
+  </form>
+<% } %>
+
+<!-- Teams Section -->
+<div class="mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Teams</h4>
+    <% if (typeof user !== 'undefined' && user) { %>
+      <a href="/hackathons/<%= hackathon.id %>/teams/new" class="btn btn-sm btn-primary">Create Team</a>
+    <% } %>
+  </div>
+
+  <% if (teams && teams.length > 0) { %>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="thead-light">
+          <tr>
+            <th>Team Name</th>
+            <th>Project</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% teams.forEach(function(t) { %>
+            <tr>
+              <td><%= t.name %></td>
+              <td><%= t.project_name %></td>
+              <td><a href="/teams/<%= t.id %>" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <p class="text-muted">No teams yet. Be the first to create one!</p>
+  <% } %>
+</div>
+
+<hr>
+
+<!-- Submissions Section -->
+<div class="mb-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h4>Submissions</h4>
+    <% if (typeof user !== 'undefined' && user) { %>
+      <a href="/hackathons/<%= hackathon.id %>/submissions/new" class="btn btn-sm btn-primary">New Submission</a>
+    <% } %>
+  </div>
+
+  <% if (submissions && submissions.length > 0) { %>
+    <div class="table-responsive">
+      <table class="table table-hover">
+        <thead class="thead-light">
+          <tr>
+            <th>Title</th>
+            <th>Team</th>
+            <th>Submitted At</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% submissions.forEach(function(s) { %>
+            <tr>
+              <td><%= s.title %></td>
+              <td><%= s.team_name %></td>
+              <td><%= s.submitted_at %></td>
+              <td><a href="/submissions/<%= s.id %>" class="btn btn-sm btn-outline-primary">View</a></td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+  <% } else { %>
+    <p class="text-muted">No submissions yet.</p>
+  <% } %>
+</div>
+
+<a href="/hackathons" class="btn btn-outline-secondary">&larr; Back to Hackathons</a>
+
+<%- include('../layout/footer') %>

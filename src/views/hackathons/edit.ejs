@@ -1,0 +1,50 @@
+<%- include('../layout/header') %>
+
+<h2 class="mb-4">Edit Hackathon</h2>
+
+<form action="/hackathons/<%= hackathon.id %>/update" method="POST">
+  <div class="form-group">
+    <label for="name">Hackathon Name</label>
+    <input type="text" class="form-control" id="name" name="name" required value="<%= hackathon.name %>">
+  </div>
+
+  <div class="form-group">
+    <label for="description">Description</label>
+    <textarea class="form-control" id="description" name="description" rows="4"><%= hackathon.description %></textarea>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-md-6">
+      <label for="start_date">Start Date</label>
+      <input type="date" class="form-control" id="start_date" name="start_date" required value="<%= hackathon.start_date %>">
+    </div>
+    <div class="form-group col-md-6">
+      <label for="end_date">End Date</label>
+      <input type="date" class="form-control" id="end_date" name="end_date" required value="<%= hackathon.end_date %>">
+    </div>
+  </div>
+
+  <div class="form-row">
+    <div class="form-group col-md-6">
+      <label for="location">Location</label>
+      <input type="text" class="form-control" id="location" name="location" value="<%= hackathon.location %>">
+    </div>
+    <div class="form-group col-md-3">
+      <label for="max_teams">Max Teams</label>
+      <input type="number" class="form-control" id="max_teams" name="max_teams" min="1" value="<%= hackathon.max_teams %>">
+    </div>
+    <div class="form-group col-md-3">
+      <label for="status">Status</label>
+      <select class="form-control" id="status" name="status">
+        <option value="upcoming" <%= hackathon.status === 'upcoming' ? 'selected' : '' %>>Upcoming</option>
+        <option value="active" <%= hackathon.status === 'active' ? 'selected' : '' %>>Active</option>
+        <option value="completed" <%= hackathon.status === 'completed' ? 'selected' : '' %>>Completed</option>
+      </select>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary">Update Hackathon</button>
+  <a href="/hackathons/<%= hackathon.id %>" class="btn btn-secondary ml-2">Cancel</a>
+</form>
+
+<%- include('../layout/footer') %>
