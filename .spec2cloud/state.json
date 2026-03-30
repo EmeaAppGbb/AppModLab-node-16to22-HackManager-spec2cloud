@@ -1,0 +1,29 @@
+{
+  "mode": "brownfield",
+  "phase": "planning-complete",
+  "testability": "none",
+  "nodeTarget": "22",
+  "incrementPlan": [
+    { "id": "mod-001", "type": "modernization", "title": "Config Externalization & DB Hardening", "status": "planned" },
+    { "id": "mod-002", "type": "modernization", "title": "Node Engine & Dev Tooling", "status": "planned" },
+    { "id": "mod-003", "type": "modernization", "title": "Linting & Code Style", "status": "planned" },
+    { "id": "mod-004", "type": "modernization", "title": "Authorization Hardening", "status": "planned" },
+    { "id": "mod-005", "type": "modernization", "title": "CSRF Protection", "status": "planned" },
+    { "id": "mod-006", "type": "modernization", "title": "Rate Limiting & Error Sanitization", "status": "planned" },
+    { "id": "mod-007", "type": "modernization", "title": "Persistent Session Store", "status": "planned" },
+    { "id": "mod-008", "type": "modernization", "title": "Service Layer Extraction", "status": "planned" },
+    { "id": "mod-009", "type": "modernization", "title": "Async Patterns", "status": "planned" },
+    { "id": "mod-010", "type": "modernization", "title": "Input Validation", "status": "planned" },
+    { "id": "mod-011", "type": "modernization", "title": "Test Framework & Initial Tests", "status": "planned" },
+    { "id": "mod-012", "type": "modernization", "title": "CI/CD Pipeline", "status": "planned" },
+    { "id": "mod-013", "type": "modernization", "title": "Replace moment.js", "status": "planned" },
+    { "id": "mod-014", "type": "modernization", "title": "Dependency Cleanup & Upgrades", "status": "planned" },
+    { "id": "mod-015", "type": "modernization", "title": "Frontend Modernization", "status": "planned" },
+    { "id": "mod-016", "type": "modernization", "title": "Structured Logging", "status": "planned" },
+    { "id": "mod-017", "type": "modernization", "title": "Documentation", "status": "planned" }
+  ],
+  "adrs": [
+    { "id": "ADR-001", "title": "Modernization Strategy", "status": "proposed" },
+    { "id": "ADR-002", "title": "Node.js Target Version", "status": "proposed" }
+  ]
+}
