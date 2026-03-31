@@ -1025,3 +1025,38 @@ Legend: 🔴 Tier 1 (Critical) · 🟠 Tier 2 (High) · 🟢 Tier 3 (Medium) · 
 | sec-013 | HTTPS Enforcement | 4 (Low) | SEC-014 | none | Low |
 
 **13 security increments covering all 13 findings.** All Tier 1 findings addressed in first 2 increments.
+
+---
+
+## Feature Increments
+
+### ext-001: Hackathon Leaderboard
+
+- **Type:** extension
+- **FRD:** FRD-F8 (Hackathon Leaderboard)
+- **Scope:** New leaderboard page ranking teams by aggregated judge scores, filterable by hackathon.
+- **Components:**
+  - Repository: Add getLeaderboard(hackathonId?) query to src/repositories/index.js
+  - Service: New src/services/leaderboardService.js with ranking/aggregation logic
+  - Route: New src/routes/leaderboard.js — GET /leaderboard with optional hackathon_id query param
+  - View: New src/views/leaderboard/index.ejs — ranked table with filter dropdown
+  - Navigation: Add Leaderboard link to src/views/partials/navbar.ejs
+- **Acceptance Criteria:**
+  - [ ] GET /leaderboard returns 200 with ranked submissions table
+  - [ ] Submissions ranked by average overall score descending
+  - [ ] Each row shows: rank, team name, submission title, avg overall, judge count, per-criteria avgs
+  - [ ] Dropdown filters by hackathon (GET /leaderboard?hackathon_id=N)
+  - [ ] Default view groups all hackathons with section headers
+  - [ ] Teams with no scores appear at bottom as 'Not yet scored'
+  - [ ] Scores displayed to one decimal place
+  - [ ] Team/submission names link to their detail pages
+  - [ ] Leaderboard link appears in main navigation
+  - [ ] Invalid hackathon_id returns 404
+  - [ ] Hackathon with no submissions shows 'No submissions yet'
+  - [ ] No PII (email) exposed in leaderboard data
+- **Test Strategy:**
+  - Unit tests for leaderboardService (ranking, filtering, edge cases)
+  - Integration tests for GET /leaderboard route (auth-free, filtering, 404)
+  - Verify score aggregation matches SQL AVG calculation
+- **Dependencies:** none (builds on existing scores/submissions/teams tables)
+- **Risk:** Low — read-only feature, no data mutations

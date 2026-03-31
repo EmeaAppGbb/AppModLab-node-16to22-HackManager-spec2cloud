@@ -92,6 +92,15 @@ Homepage showing aggregate statistics and recent hackathon events. Provides a la
 - Display total counts (hackathons, teams, participants)
 - Show 3 most recent hackathons with formatted dates
 
+### F8: Hackathon Leaderboard
+A real-time leaderboard page that ranks teams by their overall scores with filtering by hackathon. Aggregates all judge scores per submission and provides a public-facing view of competition standings.
+
+**Planned flows**:
+- View ranked leaderboard of all submissions across hackathons
+- Filter leaderboard by specific hackathon
+- See per-criteria score breakdowns (innovation, technical, presentation, impact)
+- Navigate from leaderboard entries to team/submission detail pages
+
 ## Non-Functional Requirements (Observed)
 
 | Aspect | Current State |
