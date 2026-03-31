@@ -256,6 +256,35 @@ Before starting this lab, make sure you have the following:
 
 ---
 
+## 🛠️ Running the Current legacy application
+To run the current legacy application, follow these steps:
+
+1. **Set up your environment** using one of the options in the [Developer Onboarding Guide](DEVELOPER_GUIDE.md).
+
+2. **Start the application**:
+   - If using **GitHub Codespaces** or the **Node.js 16 Dev Container**, simply run:
+     ```bash
+     npm install
+     npm run seed
+     npm start
+     ```
+   - If using **local nvm**, first switch to Node.js 16:
+     ```bash
+     nvm use 16
+     ```
+     Then run:
+     ```bash
+     npm install
+     npm run seed
+     npm start
+     ```
+
+3. **Access the application**:
+    Open your browser and navigate to [http://localhost:3000](http://localhost:3000) to see the HackManager app in action!
+
+    ![HackManager Homepage](/img/step0-legacyApp.png)
+---
+
 ## 🛠️ Modernization Steps
 
 Follow these steps to modernize the HackManager application from Node.js 16 to Node.js 22 using Spec2Cloud! 🚀
@@ -275,6 +304,9 @@ You will be prompted to select the setup scope. Choose **🏗️ Brownfield** si
 > 📖 **Need more details?** Check out the full [Spec2Cloud Brownfield Documentation](https://github.com/EmeaAppGbb/spec2cloud/blob/vNext/docs/brownfield.md) for an in-depth guide on brownfield modernization scenarios.
 
 > ℹ️ **What happens here?** Spec2Cloud scaffolds the necessary configuration files and Copilot skills into your repository, preparing it for the spec-driven modernization workflow.
+
+![HackManager Spec2Cloud Initialization](/img/step1-init-spec2cloud.png)
+
 
 ---
 
@@ -302,6 +334,9 @@ Use the **Modernization-Assessment** Spec2Cloud skill in Copilot:
 /modernization-assessment
 ```
 
+![HackManager Modernization Assessment](/img/step2-modernization-assessment.png)
+
+
 Then, ask Copilot to **analyze the codebase** and generate the application architecture, Functional Requirements Documents (FRDs), and Product Requirements Documents (PRDs):
 
 ```
@@ -309,6 +344,9 @@ Analyse the codebase and generate specs
 ```
 
 🎁 **What you get:** A rich set of documentation to help you deeply understand the application and its modernization needs! Copilot can also generate diagrams and architecture documentation based on the code analysis.
+
+![HackManager Modernization Analysis](/img/step2-modernization-analysis.png)
+
 
 ---
 
@@ -337,6 +375,9 @@ Ask Copilot to generate a detailed modernization plan using the **Modernization 
 ```
 
 > 📋 **What you get:** A comprehensive, step-by-step implementation plan that breaks down the modernization into manageable, ordered tasks.
+
+![HackManager Modernization Plan](/img/step2-modernization-plan.png)
+
 
 ---
 
@@ -371,6 +412,10 @@ Typical modernization changes for a Node.js 16 → 22 upgrade include:
 | Error handling | Callbacks, basic try/catch | Structured error handling |
 | Dependencies | Older package versions | Updated, secure versions |
 | Engine field | `"node": ">=16.0.0"` | `"node": ">=22.0.0"` |
+
+
+![HackManager Modernization Implementation](/img/step2-modernization-implementation.png)
+
 
 ---
 
@@ -418,10 +463,12 @@ Copilot will present you with decisions around:
 🏛️ Continue to explore the power of Spec2Cloud by asking Copilot to generate architecture documentation for the modernized application. Leverage the **Architecture Mapper** skill to document your new version of the application:
 
 ```
-/architecture-mapper based on the modernized code document all the architecture component
+/architecture-mapper based on the modernized code document all the architecture components
 ```
 
 🎁 **What you get:** A detailed architecture documentation for your modernized application, including diagrams and component descriptions. This documentation will be invaluable for onboarding new team members and maintaining the application in the future.
+
+![HackManager Architecture Mapper](/img/step3-architecture.png)
 
 ---
 
@@ -435,6 +482,9 @@ Copilot will present you with decisions around:
 
 > ✅ **What you get:** A full set of unit and integration tests aligned with your application's specifications, ensuring your modernized code is robust and regression-proof.
 
+![HackManager Test Generation](/img/step4-test-implement.png)
+
+
 ---
 
 ### 📌 Step 12 — CVEs & Security Analysis
@@ -445,11 +495,17 @@ Copilot will present you with decisions around:
 /security-assessment with this new modernized application perform a audit for security vulnerabilities and CVEs
 ```
 
+![HackManager Security Assessment](/img/step4-sec-assessment.png)
+
+
 Next, plan the remediation of the identified security issues with the **Security Planner** skill:
 
 ```
 /security-planner
 ```
+
+![HackManager Security Assessment Plan](/img/step4-sec-plan.png)
+
 
 Finally, execute the security remediation plan:
 
@@ -458,6 +514,9 @@ implement the security remediation plan
 ```
 
 > 🛡️ **What you get:** A security-hardened application with identified CVEs remediated and documented.
+
+![HackManager Security Assessment Implementation](/img/step4-sec-implement.png)
+
 
 ---
 
@@ -475,6 +534,9 @@ Add the following requirement to the specifications: "Hackathon Leaderboard — 
 
 Review the updated specifications to ensure that the new requirement has been properly incorporated.
 
+![HackManager Leaderboard](/img/step5-new-spec.png)
+
+
 **2️⃣ Implement the new feature based on the updated specifications:**
 
 ```
@@ -482,6 +544,8 @@ Implement the new feature based on the updated specifications
 ```
 
 > 🎯 **What you get:** A new feature implemented following the spec-driven approach — fully documented, traced back to specifications, and consistent with the modernized codebase.
+
+![HackManager Leaderboard Feature](/img/step5-new-spec-implement.png)
 
 ---
 
