@@ -165,6 +165,27 @@ const submissionRepo = {
       )
       .all(submissionId);
   },
+  findLeaderboard(hackathonId) {
+    let sql =
+      'SELECT submissions.id as submission_id, submissions.title as submission_title, ' +
+      'teams.id as team_id, teams.name as team_name, ' +
+      'hackathons.id as hackathon_id, hackathons.name as hackathon_name, ' +
+      'ROUND(AVG(scores.overall), 1) as avg_overall, ' +
+      'ROUND(AVG(scores.innovation), 1) as avg_innovation, ' +
+      'ROUND(AVG(scores.technical), 1) as avg_technical, ' +
+      'ROUND(AVG(scores.presentation), 1) as avg_presentation, ' +
+      'ROUND(AVG(scores.impact), 1) as avg_impact, ' +
+      'COUNT(scores.id) as judge_count ' +
+      'FROM submissions ' +
+      'LEFT JOIN teams ON submissions.team_id = teams.id ' +
+      'LEFT JOIN hackathons ON submissions.hackathon_id = hackathons.id ' +
+      'LEFT JOIN scores ON submissions.id = scores.submission_id';
+    if (hackathonId) {
+      sql += ' WHERE submissions.hackathon_id = ?';
+    }
+    sql += ' GROUP BY submissions.id ORDER BY avg_overall DESC, submissions.title ASC';
+    return hackathonId ? getDb().prepare(sql).all(hackathonId) : getDb().prepare(sql).all();
+  },
   create(data) {
     return getDb()
       .prepare(

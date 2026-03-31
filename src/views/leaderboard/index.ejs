@@ -1,0 +1,42 @@
+<%- include('../layout/header') %>
+
+<h2 class="mb-4">🏅 Leaderboard</h2>
+
+<div class="mb-4">
+  <form method="GET" action="/leaderboard" class="d-flex align-items-center gap-2">
+    <label for="hackathon_id" class="form-label mb-0 fw-bold">Filter by Hackathon:</label>
+    <select name="hackathon_id" id="hackathon_id" class="form-select" style="max-width: 300px;" onchange="this.form.submit()">
+      <option value="">All Hackathons</option>
+      <% hackathons.forEach(function(h) { %>
+        <option value="<%= h.id %>" <%= selectedHackathonId === h.id ? 'selected' : '' %>><%= h.name %></option>
+      <% }); %>
+    </select>
+    <noscript><button type="submit" class="btn btn-primary btn-sm">Filter</button></noscript>
+  </form>
+</div>
+
+<% if (entries && entries.length > 0) { %>
+  <%
+    // Group entries by hackathon for "All" view
+    const grouped = {};
+    entries.forEach(function(e) {
+      const key = e.hackathon_id;
+      if (!grouped[key]) grouped[key] = { name: e.hackathon_name, entries: [] };
+      grouped[key].entries.push(e);
+    });
+    const hackathonGroups = Object.values(grouped);
+  %>
+
+  <% if (!selectedHackathonId && hackathonGroups.length > 1) { %>
+    <% hackathonGroups.forEach(function(group) { %>
+      <h4 class="mt-4 mb-3"><%= group.name %></h4>
+      <%- include('_table', { rows: group.entries }) %>
+    <% }); %>
+  <% } else { %>
+    <%- include('_table', { rows: entries }) %>
+  <% } %>
+<% } else { %>
+  <div class="alert alert-info">No submissions yet.</div>
+<% } %>
+
+<%- include('../layout/footer') %>

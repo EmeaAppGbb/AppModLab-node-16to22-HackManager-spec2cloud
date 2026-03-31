@@ -1,0 +1,37 @@
+<div class="table-responsive">
+  <table class="table table-hover">
+    <thead class="thead-dark">
+      <tr>
+        <th>Rank</th>
+        <th>Team</th>
+        <th>Submission</th>
+        <th>Overall</th>
+        <th>Innovation</th>
+        <th>Technical</th>
+        <th>Presentation</th>
+        <th>Impact</th>
+        <th>Judges</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% rows.forEach(function(e) { %>
+        <tr>
+          <td><%= e.rank ? '#' + e.rank : '—' %></td>
+          <td><a href="/teams/<%= e.team_id %>"><%= e.team_name %></a></td>
+          <td><a href="/submissions/<%= e.submission_id %>"><%= e.submission_title %></a></td>
+          <% if (e.judge_count > 0) { %>
+            <td><strong><%= Number(e.avg_overall).toFixed(1) %></strong></td>
+            <td><%= Number(e.avg_innovation).toFixed(1) %></td>
+            <td><%= Number(e.avg_technical).toFixed(1) %></td>
+            <td><%= Number(e.avg_presentation).toFixed(1) %></td>
+            <td><%= Number(e.avg_impact).toFixed(1) %></td>
+            <td><%= e.judge_count %> judge<%= e.judge_count !== 1 ? 's' : '' %></td>
+          <% } else { %>
+            <td colspan="5" class="text-muted">Not yet scored</td>
+            <td class="text-muted">0 judges</td>
+          <% } %>
+        </tr>
+      <% }); %>
+    </tbody>
+  </table>
+</div>

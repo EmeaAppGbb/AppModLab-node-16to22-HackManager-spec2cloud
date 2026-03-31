@@ -150,6 +150,7 @@ const teamRoutes = require('./routes/teams');
 const participantRoutes = require('./routes/participants');
 const submissionRoutes = require('./routes/submissions');
 const judgingRoutes = require('./routes/judging');
+const leaderboardRoutes = require('./routes/leaderboard');
 
 app.use('/', indexRoutes);
 app.use('/auth/login', authLoginLimiter);
@@ -161,6 +162,7 @@ app.use('/', participantRoutes);
 app.use('/hackathons', writeLimiter);
 app.use('/', submissionRoutes);
 app.use('/', judgingRoutes);
+app.use('/', leaderboardRoutes);
 
 // 404 handler
 app.use((req, res, next) => {
