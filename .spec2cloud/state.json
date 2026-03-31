@@ -34,7 +34,7 @@
     { "id": "sec-011", "type": "security", "tier": 3, "title": "Generic Registration Errors", "status": "done" },
     { "id": "sec-012", "type": "security", "tier": 4, "title": "Server-Side Password Confirmation", "status": "done" },
     { "id": "sec-013", "type": "security", "tier": 4, "title": "HTTPS Enforcement", "status": "done" },
-    { "id": "ext-001", "type": "extension", "title": "Hackathon Leaderboard", "status": "planned" }
+    { "id": "ext-001", "type": "extension", "title": "Hackathon Leaderboard", "status": "done" }
   ],
   "adrs": [
     { "id": "ADR-001", "title": "Modernization Strategy", "status": "accepted" },
