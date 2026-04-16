@@ -1,0 +1,98 @@
+# Step 03: Migration Specification — Node 16 → 22
+# ================================================
+
+## Migration Specification Document
+
+### Scope
+Migrate HackManager from Node.js 16 patterns to Node.js 22, preserving all functionality.
+
+### Target Environment
+- Node.js: >=22.0.0
+- npm: >=10.0.0
+
+---
+
+## Change Specification
+
+### CS-01: ESM Module System
+- **What**: Convert all CommonJS require/module.exports to ES Module import/export
+- **How**: 
+  - Add `"type": "module"` to package.json
+  - Replace `var x = require('y')` → `import x from 'y'`
+  - Replace `module.exports = x` → `export default x`
+  - Replace `module.exports = { a, b }` → `export { a, b }`
+  - Update `__dirname` usage with `import.meta.url` + `fileURLToPath`
+- **Files**: ALL .js files (11 source + 1 seed)
+
+### CS-02: Remove body-parser
+- **What**: Replace standalone body-parser with Express built-in middleware
+- **How**:
+  - Remove `body-parser` from package.json dependencies
+  - Replace `bodyParser.urlencoded()` → `express.urlencoded()`
+  - Replace `bodyParser.json()` → `express.json()`
+- **Files**: src/app.js, package.json
+
+### CS-03: Replace moment.js
+- **What**: Replace deprecated moment with native Intl/Date APIs
+- **How**:
+  - Use `new Date(dateStr).toLocaleDateString()` for display dates
+  - Use `new Date(dateStr).toISOString().split('T')[0]` for ISO dates
+  - Remove `moment` from package.json dependencies
+- **Files**: src/routes/index.js, hackathons.js, submissions.js
+
+### CS-04: Modern Syntax
+- **What**: Update JavaScript syntax to modern standards
+- **How**:
+  - `var` → `const` (or `let` where reassignment needed)
+  - `function(args)` → `(args) =>` for callbacks
+  - String concatenation → template literals where beneficial
+- **Files**: ALL .js files
+
+### CS-05: Upgrade Dependencies
+- **What**: Update all npm packages to Node 22 compatible versions
+- **How**:
+  - better-sqlite3: ^9.6.0 → ^11.0.0 (Node 22 prebuilds)
+  - express: ^4.18.2 → ^4.21.0
+  - ejs: ^3.1.9 → ^3.1.10
+  - bcryptjs: ^2.4.3 → latest
+  - express-session: ^1.17.3 → ^1.18.0
+  - nodemon: ^2.0.22 → ^3.1.0
+- **Files**: package.json, package-lock.json
+
+### CS-06: Update Node Engine
+- **What**: Update engines field in package.json
+- **How**: Change `"node": ">=16.0.0"` → `"node": ">=22.0.0"`
+- **Files**: package.json
+
+### CS-07: Add Node 22 Built-in Test
+- **What**: Add basic smoke tests using node:test runner
+- **How**:
+  - Create src/tests/app.test.js using `import { test } from 'node:test'`
+  - Add `"test": "node --test"` script to package.json
+  - Test database init, route loading, basic assertions
+- **Files**: New test file, package.json
+
+### CS-08: Native fetch Documentation
+- **What**: Document that global fetch is available (no node-fetch needed)
+- **Note**: App currently has no HTTP client calls, so this is informational
+
+### CS-09: structuredClone Availability
+- **What**: Document structuredClone availability for deep cloning
+- **Note**: No current deep clone patterns found, informational
+
+---
+
+## Migration Order
+1. CS-06 → CS-05 (Update engine + dependencies first)
+2. CS-01 (ESM conversion - largest change)
+3. CS-02 + CS-03 + CS-04 (API modernization in parallel)
+4. CS-07 (Add tests)
+5. CS-08 + CS-09 (Documentation)
+
+## Validation Criteria
+- [ ] npm install succeeds
+- [ ] npm start launches server on port 3000
+- [ ] npm test passes
+- [ ] All routes respond correctly
+- [ ] Database seeding works
+- [ ] Authentication flow works
