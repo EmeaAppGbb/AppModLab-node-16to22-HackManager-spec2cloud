@@ -1,0 +1,33 @@
+# Step 07: Update Dependencies
+# ==============================
+
+## Current Dependency Status
+All packages at latest compatible versions within semver ranges.
+npm audit: 0 vulnerabilities.
+
+## Dependencies (production)
+| Package         | Version | Status                                    |
+|-----------------|---------|-------------------------------------------|
+| bcryptjs        | 2.4.3   | Latest in ^2.x (3.0 = breaking changes)   |
+| ejs             | 3.1.10  | Latest in ^3.x (5.0 = breaking changes)   |
+| express         | 4.22.1  | Latest in ^4.x (5.0 = breaking changes)   |
+| express-session | 1.18.1  | Latest in ^1.x                            |
+| sql.js          | 1.12.0  | Latest (new dep replacing better-sqlite3)  |
+
+## Dependencies (dev)
+| Package  | Version | Status         |
+|----------|---------|----------------|
+| nodemon  | 3.1.9   | Latest in ^3.x |
+
+## Removed Dependencies
+- body-parser (replaced with Express built-in)
+- moment (replaced with native Intl API)
+- better-sqlite3 (replaced with sql.js)
+
+## Available Major Upgrades (not applied — breaking changes)
+- bcryptjs 2.x → 3.x
+- ejs 3.x → 5.x
+- express 4.x → 5.x
+
+## npm audit
+found 0 vulnerabilities
