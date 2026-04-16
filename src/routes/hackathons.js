@@ -1,25 +1,29 @@
 import express from 'express';
-import moment from 'moment';
 import * as database from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
-const auth = { requireAuth };
+
+// Native date formatting to replace moment.js
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
 
 /* GET all hackathons */
-router.get('/hackathons', function(req, res) {
+router.get('/hackathons', (req, res) => {
   const db = database.getDb();
 
   try {
     let hackathons = db.prepare('SELECT * FROM hackathons ORDER BY start_date DESC').all();
 
-    hackathons = hackathons.map(function(h) {
-      h.start_date_formatted = moment(h.start_date).format('MMM D, YYYY');
-      h.end_date_formatted = moment(h.end_date).format('MMM D, YYYY');
+    hackathons = hackathons.map((h) => {
+      h.start_date_formatted = formatDate(h.start_date);
+      h.end_date_formatted = formatDate(h.end_date);
       return h;
     });
 
-    res.render('hackathons/index', { hackathons: hackathons });
+    res.render('hackathons/index', { hackathons });
   } catch (err) {
     console.error('Error fetching hackathons:', err);
     res.render('error', { message: 'Error loading hackathons', error: err });
@@ -27,12 +31,12 @@ router.get('/hackathons', function(req, res) {
 });
 
 /* GET new hackathon form */
-router.get('/hackathons/new', auth.requireAuth, function(req, res) {
+router.get('/hackathons/new', requireAuth, (req, res) => {
   res.render('hackathons/new');
 });
 
 /* POST create hackathon */
-router.post('/hackathons', auth.requireAuth, function(req, res) {
+router.post('/hackathons', requireAuth, (req, res) => {
   const { name, description, start_date, end_date, location, max_teams, status } = req.body;
   const db = database.getDb();
 
@@ -41,7 +45,7 @@ router.post('/hackathons', auth.requireAuth, function(req, res) {
       'INSERT INTO hackathons (name, description, start_date, end_date, location, max_teams, status, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
     ).run(name, description, start_date, end_date, location, max_teams || 10, status || 'upcoming', req.session.user.id);
 
-    res.redirect('/hackathons/' + result.lastInsertRowid);
+    res.redirect(`/hackathons/${result.lastInsertRowid}`);
   } catch (err) {
     console.error('Error creating hackathon:', err);
     res.render('error', { message: 'Error creating hackathon', error: err });
@@ -49,38 +53,9 @@ router.post('/hackathons', auth.requireAuth, function(req, res) {
 });
 
 /* GET single hackathon */
-router.get('/hackathons/:id', function(req, res) {
+router.get('/hackathons/:id', (req, res) => {
   const db = database.getDb();
-  const id = req.params.id;
-
-  try {
-    let hackathon = db.prepare('SELECT * FROM hackathons WHERE id = ?').get(id);
-
-    if (!hackathon) {
-      return res.status(404).render('error', { message: 'Hackathon not found', error: { status: 404 } });
-    }
-
-    hackathon.start_date_formatted = moment(hackathon.start_date).format('MMM D, YYYY');
-    hackathon.end_date_formatted = moment(hackathon.end_date).format('MMM D, YYYY');
-
-    const teams = db.prepare('SELECT * FROM teams WHERE hackathon_id = ?').all(id);
-    const submissions = db.prepare('SELECT * FROM submissions WHERE hackathon_id = ?').all(id);
-
-    res.render('hackathons/show', {
-      hackathon: hackathon,
-      teams: teams,
-      submissions: submissions
-    });
-  } catch (err) {
-    console.error('Error fetching hackathon:', err);
-    res.render('error', { message: 'Error loading hackathon', error: err });
-  }
-});
-
-/* GET edit hackathon form */
-router.get('/hackathons/:id/edit', auth.requireAuth, function(req, res) {
-  const db = database.getDb();
-  const id = req.params.id;
+  const { id } = req.params;
 
   try {
     const hackathon = db.prepare('SELECT * FROM hackathons WHERE id = ?').get(id);
@@ -89,7 +64,32 @@ router.get('/hackathons/:id/edit', auth.requireAuth, function(req, res) {
       return res.status(404).render('error', { message: 'Hackathon not found', error: { status: 404 } });
     }
 
-    res.render('hackathons/edit', { hackathon: hackathon });
+    hackathon.start_date_formatted = formatDate(hackathon.start_date);
+    hackathon.end_date_formatted = formatDate(hackathon.end_date);
+
+    const teams = db.prepare('SELECT * FROM teams WHERE hackathon_id = ?').all(id);
+    const submissions = db.prepare('SELECT * FROM submissions WHERE hackathon_id = ?').all(id);
+
+    res.render('hackathons/show', { hackathon, teams, submissions });
+  } catch (err) {
+    console.error('Error fetching hackathon:', err);
+    res.render('error', { message: 'Error loading hackathon', error: err });
+  }
+});
+
+/* GET edit hackathon form */
+router.get('/hackathons/:id/edit', requireAuth, (req, res) => {
+  const db = database.getDb();
+  const { id } = req.params;
+
+  try {
+    const hackathon = db.prepare('SELECT * FROM hackathons WHERE id = ?').get(id);
+
+    if (!hackathon) {
+      return res.status(404).render('error', { message: 'Hackathon not found', error: { status: 404 } });
+    }
+
+    res.render('hackathons/edit', { hackathon });
   } catch (err) {
     console.error('Error fetching hackathon for edit:', err);
     res.render('error', { message: 'Error loading hackathon', error: err });
@@ -97,17 +97,17 @@ router.get('/hackathons/:id/edit', auth.requireAuth, function(req, res) {
 });
 
 /* POST update hackathon */
-router.post('/hackathons/:id/update', auth.requireAuth, function(req, res) {
+router.post('/hackathons/:id/update', requireAuth, (req, res) => {
   const { name, description, start_date, end_date, location, max_teams, status } = req.body;
   const db = database.getDb();
-  const id = req.params.id;
+  const { id } = req.params;
 
   try {
     db.prepare(
       'UPDATE hackathons SET name = ?, description = ?, start_date = ?, end_date = ?, location = ?, max_teams = ?, status = ? WHERE id = ?'
     ).run(name, description, start_date, end_date, location, max_teams || 10, status || 'upcoming', id);
 
-    res.redirect('/hackathons/' + id);
+    res.redirect(`/hackathons/${id}`);
   } catch (err) {
     console.error('Error updating hackathon:', err);
     res.render('error', { message: 'Error updating hackathon', error: err });
@@ -115,9 +115,9 @@ router.post('/hackathons/:id/update', auth.requireAuth, function(req, res) {
 });
 
 /* POST delete hackathon */
-router.post('/hackathons/:id/delete', auth.requireAuth, function(req, res) {
+router.post('/hackathons/:id/delete', requireAuth, (req, res) => {
   const db = database.getDb();
-  const id = req.params.id;
+  const { id } = req.params;
 
   try {
     db.prepare('DELETE FROM hackathons WHERE id = ?').run(id);

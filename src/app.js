@@ -18,7 +18,7 @@ import participantRoutes from './routes/participants.js';
 import submissionRoutes from './routes/submissions.js';
 import judgingRoutes from './routes/judging.js';
 
-database.initDatabase().then(function() {
+database.initDatabase().then(() => {
   const app = express();
   const port = process.env.PORT || 3000;
 
@@ -26,12 +26,11 @@ database.initDatabase().then(function() {
   app.set('view engine', 'ejs');
   app.set('views', path.join(__dirname, 'views'));
 
-  // Body parser middleware (use Express built-in instead of deprecated body-parser)
+  // Body parser middleware (Express built-in, replaces deprecated body-parser)
   app.use(express.urlencoded({ extended: false }));
   app.use(express.json());
 
   // Session middleware
-  // TODO: use a proper session store for production (connect-redis, etc.)
   app.use(session({
     secret: 'hackathon-secret-key-2023',
     resave: false,
@@ -42,13 +41,10 @@ database.initDatabase().then(function() {
   app.use(express.static(path.join(__dirname, 'public')));
 
   // Make session user available to all views
-  app.use(function(req, res, next) {
+  app.use((req, res, next) => {
     res.locals.user = req.session.user || null;
     next();
   });
-
-  // TODO: add CSRF protection middleware
-  // TODO: add request logging middleware (morgan)
 
   // Mount routes
   app.use('/', indexRoutes);
@@ -60,15 +56,14 @@ database.initDatabase().then(function() {
   app.use('/', judgingRoutes);
 
   // 404 handler
-  app.use(function(req, res, next) {
+  app.use((req, res, next) => {
     const err = new Error('Not Found');
     err.status = 404;
     next(err);
   });
 
   // Error handling middleware
-  // TODO: improve error handling for production
-  app.use(function(err, req, res, next) {
+  app.use((err, req, res, next) => {
     res.status(err.status || 500);
     res.render('error', {
       message: err.message,
@@ -76,10 +71,10 @@ database.initDatabase().then(function() {
     });
   });
 
-  app.listen(port, function() {
-    console.log('Server running on port ' + port);
+  app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
   });
-}).catch(function(err) {
+}).catch((err) => {
   console.error('Failed to initialize database:', err);
   process.exit(1);
 });

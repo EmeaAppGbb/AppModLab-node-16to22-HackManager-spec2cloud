@@ -5,23 +5,19 @@ import * as database from '../config/database.js';
 const router = express.Router();
 
 /* GET login page */
-router.get('/login', function(req, res) {
+router.get('/login', (req, res) => {
   res.render('auth/login', { error: req.query.error || null });
 });
 
 /* POST login */
-router.post('/login', function(req, res) {
+router.post('/login', (req, res) => {
   const { username, password } = req.body;
   const db = database.getDb();
 
   try {
     const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username);
 
-    if (!user) {
-      return res.render('auth/login', { error: 'Invalid username or password' });
-    }
-
-    if (!bcrypt.compareSync(password, user.password)) {
+    if (!user || !bcrypt.compareSync(password, user.password)) {
       return res.render('auth/login', { error: 'Invalid username or password' });
     }
 
@@ -40,12 +36,12 @@ router.post('/login', function(req, res) {
 });
 
 /* GET register page */
-router.get('/register', function(req, res) {
+router.get('/register', (req, res) => {
   res.render('auth/register', { error: null });
 });
 
 /* POST register */
-router.post('/register', function(req, res) {
+router.post('/register', (req, res) => {
   const { username, email, password, role } = req.body;
   const db = database.getDb();
 
@@ -60,20 +56,17 @@ router.post('/register', function(req, res) {
     res.redirect('/auth/login');
   } catch (err) {
     console.error('Registration error:', err);
-    let errorMsg = 'An error occurred during registration';
-    if (err.message && err.message.includes('UNIQUE constraint')) {
-      errorMsg = 'Username or email already exists';
-    }
+    const errorMsg = err.message?.includes('UNIQUE constraint')
+      ? 'Username or email already exists'
+      : 'An error occurred during registration';
     res.render('auth/register', { error: errorMsg });
   }
 });
 
 /* GET logout */
-router.get('/logout', function(req, res) {
-  req.session.destroy(function(err) {
-    if (err) {
-      console.error('Logout error:', err);
-    }
+router.get('/logout', (req, res) => {
+  req.session.destroy((err) => {
+    if (err) console.error('Logout error:', err);
     res.redirect('/');
   });
 });

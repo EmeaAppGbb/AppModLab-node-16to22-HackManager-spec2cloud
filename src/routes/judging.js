@@ -3,10 +3,9 @@ import * as database from '../config/database.js';
 import { requireAuth, requireJudge } from '../middleware/auth.js';
 
 const router = express.Router();
-const auth = { requireAuth, requireJudge };
 
 /* GET judging dashboard - list submissions to judge */
-router.get('/judging', function(req, res) {
+router.get('/judging', (req, res) => {
   const db = database.getDb();
 
   try {
@@ -18,7 +17,7 @@ router.get('/judging', function(req, res) {
       'ORDER BY submissions.submitted_at DESC'
     ).all();
 
-    res.render('judging/index', { submissions: submissions });
+    res.render('judging/index', { submissions });
   } catch (err) {
     console.error('Error fetching judging list:', err);
     res.render('error', { message: 'Error loading judging page', error: err });
@@ -26,9 +25,9 @@ router.get('/judging', function(req, res) {
 });
 
 /* GET score form for a submission */
-router.get('/submissions/:id/judge', auth.requireJudge, function(req, res) {
+router.get('/submissions/:id/judge', requireJudge, (req, res) => {
   const db = database.getDb();
-  const id = req.params.id;
+  const { id } = req.params;
 
   try {
     const submission = db.prepare(
@@ -43,7 +42,7 @@ router.get('/submissions/:id/judge', auth.requireJudge, function(req, res) {
       return res.status(404).render('error', { message: 'Submission not found', error: { status: 404 } });
     }
 
-    res.render('judging/score', { submission: submission });
+    res.render('judging/score', { submission });
   } catch (err) {
     console.error('Error loading judge form:', err);
     res.render('error', { message: 'Error loading scoring form', error: err });
@@ -51,14 +50,13 @@ router.get('/submissions/:id/judge', auth.requireJudge, function(req, res) {
 });
 
 /* POST score a submission */
-router.post('/submissions/:id/score', auth.requireJudge, function(req, res) {
+router.post('/submissions/:id/score', requireJudge, (req, res) => {
   const { innovation, technical, presentation, impact, comments } = req.body;
   const db = database.getDb();
   const submissionId = req.params.id;
   const userId = req.session.user.id;
 
   try {
-    // Find or create judge record for this user/hackathon
     const submission = db.prepare('SELECT * FROM submissions WHERE id = ?').get(submissionId);
 
     if (!submission) {
@@ -76,7 +74,6 @@ router.post('/submissions/:id/score', auth.requireJudge, function(req, res) {
       judge = { id: result.lastInsertRowid };
     }
 
-    // Calculate overall score
     const innovationScore = parseInt(innovation) || 0;
     const technicalScore = parseInt(technical) || 0;
     const presentationScore = parseInt(presentation) || 0;

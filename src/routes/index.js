@@ -1,11 +1,16 @@
 import express from 'express';
-import moment from 'moment';
 import * as database from '../config/database.js';
 
 const router = express.Router();
 
+// Native date formatting to replace moment.js
+const formatDate = (dateStr) => {
+  const date = new Date(dateStr + 'T00:00:00');
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+};
+
 /* GET home page / dashboard */
-router.get('/', function(req, res) {
+router.get('/', (req, res) => {
   const db = database.getDb();
 
   try {
@@ -17,27 +22,24 @@ router.get('/', function(req, res) {
       'SELECT * FROM hackathons ORDER BY created_at DESC LIMIT 3'
     ).all();
 
-    // Format dates with moment
-    hackathons = hackathons.map(function(h) {
-      h.start_date_formatted = moment(h.start_date).format('MMM D, YYYY');
-      h.end_date_formatted = moment(h.end_date).format('MMM D, YYYY');
+    // Format dates with native Intl API
+    hackathons = hackathons.map((h) => {
+      h.start_date_formatted = formatDate(h.start_date);
+      h.end_date_formatted = formatDate(h.end_date);
       return h;
     });
 
     res.render('index', {
-      hackathons: hackathons,
+      hackathons,
       stats: {
-        totalHackathons: totalHackathons,
-        totalTeams: totalTeams,
-        totalParticipants: totalParticipants
+        totalHackathons,
+        totalTeams,
+        totalParticipants
       }
     });
   } catch (err) {
     console.error('Dashboard error:', err);
-    res.render('error', {
-      message: 'Error loading dashboard',
-      error: err
-    });
+    res.render('error', { message: 'Error loading dashboard', error: err });
   }
 });
 

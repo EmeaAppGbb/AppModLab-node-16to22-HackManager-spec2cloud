@@ -3,10 +3,9 @@ import * as database from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
-const auth = { requireAuth };
 
 /* GET all participants */
-router.get('/participants', function(req, res) {
+router.get('/participants', (req, res) => {
   const db = database.getDb();
 
   try {
@@ -19,7 +18,7 @@ router.get('/participants', function(req, res) {
       'ORDER BY participants.registered_at DESC'
     ).all();
 
-    res.render('participants/index', { participants: participants });
+    res.render('participants/index', { participants });
   } catch (err) {
     console.error('Error fetching participants:', err);
     res.render('error', { message: 'Error loading participants', error: err });
@@ -27,9 +26,9 @@ router.get('/participants', function(req, res) {
 });
 
 /* POST join a hackathon */
-router.post('/hackathons/:hackathonId/participants/join', auth.requireAuth, function(req, res) {
+router.post('/hackathons/:hackathonId/participants/join', requireAuth, (req, res) => {
   const db = database.getDb();
-  const hackathonId = req.params.hackathonId;
+  const { hackathonId } = req.params;
   const userId = req.session.user.id;
   const teamId = req.body.team_id || null;
 
@@ -38,7 +37,7 @@ router.post('/hackathons/:hackathonId/participants/join', auth.requireAuth, func
       'INSERT INTO participants (user_id, team_id, hackathon_id, role) VALUES (?, ?, ?, ?)'
     ).run(userId, teamId, hackathonId, 'member');
 
-    res.redirect('/hackathons/' + hackathonId);
+    res.redirect(`/hackathons/${hackathonId}`);
   } catch (err) {
     console.error('Error joining hackathon:', err);
     res.render('error', { message: 'Error joining hackathon', error: err });

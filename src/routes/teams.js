@@ -3,10 +3,9 @@ import * as database from '../config/database.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
-const auth = { requireAuth };
 
 /* GET all teams */
-router.get('/teams', function(req, res) {
+router.get('/teams', (req, res) => {
   const db = database.getDb();
 
   try {
@@ -14,7 +13,7 @@ router.get('/teams', function(req, res) {
       'SELECT teams.*, hackathons.name as hackathon_name FROM teams LEFT JOIN hackathons ON teams.hackathon_id = hackathons.id ORDER BY teams.created_at DESC'
     ).all();
 
-    res.render('teams/index', { teams: teams });
+    res.render('teams/index', { teams });
   } catch (err) {
     console.error('Error fetching teams:', err);
     res.render('error', { message: 'Error loading teams', error: err });
@@ -22,9 +21,9 @@ router.get('/teams', function(req, res) {
 });
 
 /* GET new team form for a hackathon */
-router.get('/hackathons/:hackathonId/teams/new', auth.requireAuth, function(req, res) {
+router.get('/hackathons/:hackathonId/teams/new', requireAuth, (req, res) => {
   const db = database.getDb();
-  const hackathonId = req.params.hackathonId;
+  const { hackathonId } = req.params;
 
   try {
     const hackathon = db.prepare('SELECT * FROM hackathons WHERE id = ?').get(hackathonId);
@@ -33,7 +32,7 @@ router.get('/hackathons/:hackathonId/teams/new', auth.requireAuth, function(req,
       return res.status(404).render('error', { message: 'Hackathon not found', error: { status: 404 } });
     }
 
-    res.render('teams/new', { hackathon: hackathon });
+    res.render('teams/new', { hackathon });
   } catch (err) {
     console.error('Error loading new team form:', err);
     res.render('error', { message: 'Error loading form', error: err });
@@ -41,17 +40,17 @@ router.get('/hackathons/:hackathonId/teams/new', auth.requireAuth, function(req,
 });
 
 /* POST create team for a hackathon */
-router.post('/hackathons/:hackathonId/teams', auth.requireAuth, function(req, res) {
+router.post('/hackathons/:hackathonId/teams', requireAuth, (req, res) => {
   const { name, project_name, project_description, repo_url } = req.body;
   const db = database.getDb();
-  const hackathonId = req.params.hackathonId;
+  const { hackathonId } = req.params;
 
   try {
     const result = db.prepare(
       'INSERT INTO teams (name, hackathon_id, project_name, project_description, repo_url) VALUES (?, ?, ?, ?, ?)'
     ).run(name, hackathonId, project_name, project_description, repo_url);
 
-    res.redirect('/teams/' + result.lastInsertRowid);
+    res.redirect(`/teams/${result.lastInsertRowid}`);
   } catch (err) {
     console.error('Error creating team:', err);
     res.render('error', { message: 'Error creating team', error: err });
@@ -59,9 +58,9 @@ router.post('/hackathons/:hackathonId/teams', auth.requireAuth, function(req, re
 });
 
 /* GET single team */
-router.get('/teams/:id', function(req, res) {
+router.get('/teams/:id', (req, res) => {
   const db = database.getDb();
-  const id = req.params.id;
+  const { id } = req.params;
 
   try {
     const team = db.prepare('SELECT * FROM teams WHERE id = ?').get(id);
@@ -76,11 +75,7 @@ router.get('/teams/:id', function(req, res) {
 
     const hackathon = db.prepare('SELECT * FROM hackathons WHERE id = ?').get(team.hackathon_id);
 
-    res.render('teams/show', {
-      team: team,
-      members: members,
-      hackathon: hackathon
-    });
+    res.render('teams/show', { team, members, hackathon });
   } catch (err) {
     console.error('Error fetching team:', err);
     res.render('error', { message: 'Error loading team', error: err });

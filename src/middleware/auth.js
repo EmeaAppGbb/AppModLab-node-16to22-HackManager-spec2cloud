@@ -1,16 +1,15 @@
 /**
  * Authentication middleware for hackathon app
- * TODO: add rate limiting for login attempts
  */
 
-function requireAuth(req, res, next) {
+const requireAuth = (req, res, next) => {
   if (!req.session.user) {
     return res.redirect('/auth/login');
   }
   next();
-}
+};
 
-function requireJudge(req, res, next) {
+const requireJudge = (req, res, next) => {
   if (!req.session.user) {
     return res.redirect('/auth/login');
   }
@@ -21,6 +20,6 @@ function requireJudge(req, res, next) {
     });
   }
   next();
-}
+};
 
 export { requireAuth, requireJudge };

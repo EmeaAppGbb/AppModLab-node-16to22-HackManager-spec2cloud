@@ -1,0 +1,31 @@
+# Step 06: Modernize APIs
+# ========================
+
+## Changes Made
+1. Replaced moment.js with native Intl.DateTimeFormat / Date.toLocaleDateString()
+   - Created formatDate() helper in index.js, hackathons.js
+   - Created formatDateTime() helper in submissions.js
+   - Removed moment from package.json
+2. Converted all function() callbacks to arrow functions (=>)
+3. Replaced string concatenation with template literals
+4. Used shorthand object properties (e.g., { hackathons } instead of { hackathons: hackathons })
+5. Used destructuring for req.params (e.g., const { id } = req.params)
+6. Used optional chaining (err.message?.includes)
+7. Removed unnecessary auth wrapper objects, using direct imports
+
+## Files Modified
+- src/app.js - Arrow functions, template literals
+- src/middleware/auth.js - Arrow function syntax
+- src/routes/index.js - Removed moment, native dates, arrows
+- src/routes/hackathons.js - Removed moment, native dates, arrows
+- src/routes/submissions.js - Removed moment, native dates, arrows
+- src/routes/auth.js - Arrow functions, optional chaining
+- src/routes/teams.js - Arrow functions, template literals
+- src/routes/participants.js - Arrow functions, template literals
+- src/routes/judging.js - Arrow functions, direct imports
+- package.json - Removed moment dependency
+
+## Verification
+- npm install: SUCCESS (moment removed, 0 vulnerabilities)
+- npm start: SUCCESS
+- Routes tested: /, /hackathons, /submissions, /auth/login → all HTTP 200
