@@ -1,0 +1,55 @@
+# Step 01: Explore Legacy Node 16 App
+# ==============================================
+
+## Node Version Check
+Current Node: v24.14.1 (target: Node 22 patterns)
+Package.json engines: ">=16.0.0"
+
+## Legacy Codebase Analysis
+
+### Architecture
+- Express 4.18.2 web app with EJS templates
+- SQLite via better-sqlite3 (synchronous)
+- Session-based auth with bcryptjs
+- 7 route modules: index, auth, hackathons, teams, participants, submissions, judging
+
+### Node 16 / CommonJS Patterns Found
+1. **CommonJS require/exports** - All 11 source files use `require()` and `module.exports`
+2. **var declarations** - 20+ instances of `var` instead of `const`/`let`
+3. **Separate body-parser** - Using deprecated standalone body-parser package
+4. **Callback-style functions** - `function(req, res, next)` instead of arrow functions
+5. **moment.js** - Using moment (deprecated) for date formatting
+6. **Synchronous bcrypt** - `bcrypt.hashSync()` and `bcrypt.compareSync()`
+7. **No async/await** - Entire codebase uses synchronous patterns
+8. **Old nodemon** - v2.0.22 in devDependencies
+9. **Hardcoded secrets** - Session secret in source code
+
+### Files Inventory
+- src/app.js - Main Express app (79 lines)
+- src/config/database.js - SQLite setup with schema
+- src/middleware/auth.js - requireAuth, requireJudge middleware
+- src/routes/index.js - Dashboard with stats
+- src/routes/auth.js - Login/register/logout
+- src/routes/hackathons.js - Hackathon CRUD
+- src/routes/teams.js - Team management
+- src/routes/participants.js - Participant joining
+- src/routes/submissions.js - Project submissions
+- src/routes/judging.js - Scoring interface
+- seeds/seed.js - Database seeding script
+- src/views/ - EJS templates (15+ files)
+
+### npm install Result
+FAILED: better-sqlite3@9.6.0 requires native compilation (node-gyp)
+- No Python found for node-gyp build
+- Package too old for Node 24 prebuilds
+- This is a key modernization target
+
+### Dependencies (package.json)
+- bcryptjs: ^2.4.3
+- better-sqlite3: ^9.6.0 (NEEDS UPGRADE)
+- body-parser: ^1.20.2 (DEPRECATED - use express built-in)
+- ejs: ^3.1.9
+- express: ^4.18.2
+- express-session: ^1.17.3
+- moment: ^2.29.4 (DEPRECATED)
+- nodemon: ^2.0.22 (dev)
