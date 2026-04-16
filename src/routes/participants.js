@@ -1,7 +1,9 @@
-var express = require('express');
-var router = express.Router();
-var database = require('../config/database');
-var auth = require('../middleware/auth');
+import express from 'express';
+import * as database from '../config/database.js';
+import { requireAuth } from '../middleware/auth.js';
+
+const router = express.Router();
+const auth = { requireAuth };
 
 /* GET all participants */
 router.get('/participants', function(req, res) {
@@ -43,4 +45,4 @@ router.post('/hackathons/:hackathonId/participants/join', auth.requireAuth, func
   }
 });
 
-module.exports = router;
+export default router;

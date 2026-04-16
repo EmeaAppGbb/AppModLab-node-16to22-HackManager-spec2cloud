@@ -1,21 +1,26 @@
-var initSqlJs = require('sql.js');
-var path = require('path');
-var fs = require('fs');
+import initSqlJs from 'sql.js';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-var db = null;
-var dbPath = null;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+let db = null;
+let dbPath = null;
 
 // Wrapper that provides a better-sqlite3-compatible API over sql.js
 function createPrepared(sqlJsDb, sql, saveFn) {
   return {
     all: function() {
-      var params = Array.prototype.slice.call(arguments);
-      var stmt = sqlJsDb.prepare(sql);
+      const params = Array.prototype.slice.call(arguments);
+      const stmt = sqlJsDb.prepare(sql);
       if (params.length === 1 && typeof params[0] === 'object' && !Array.isArray(params[0])) {
         // Named params: convert {key: val} to {'@key': val}
-        var named = {};
-        var obj = params[0];
-        for (var k in obj) {
+        const named = {};
+        const obj = params[0];
+        for (const k in obj) {
           if (Object.prototype.hasOwnProperty.call(obj, k)) {
             named['@' + k] = obj[k];
           }
@@ -24,7 +29,7 @@ function createPrepared(sqlJsDb, sql, saveFn) {
       } else if (params.length > 0) {
         stmt.bind(params);
       }
-      var rows = [];
+      const rows = [];
       while (stmt.step()) {
         rows.push(stmt.getAsObject());
       }
@@ -32,12 +37,12 @@ function createPrepared(sqlJsDb, sql, saveFn) {
       return rows;
     },
     get: function() {
-      var params = Array.prototype.slice.call(arguments);
-      var stmt = sqlJsDb.prepare(sql);
+      const params = Array.prototype.slice.call(arguments);
+      const stmt = sqlJsDb.prepare(sql);
       if (params.length === 1 && typeof params[0] === 'object' && !Array.isArray(params[0])) {
-        var named = {};
-        var obj = params[0];
-        for (var k in obj) {
+        const named = {};
+        const obj = params[0];
+        for (const k in obj) {
           if (Object.prototype.hasOwnProperty.call(obj, k)) {
             named['@' + k] = obj[k];
           }
@@ -46,7 +51,7 @@ function createPrepared(sqlJsDb, sql, saveFn) {
       } else if (params.length > 0) {
         stmt.bind(params);
       }
-      var row = null;
+      let row = null;
       if (stmt.step()) {
         row = stmt.getAsObject();
       }
@@ -54,11 +59,11 @@ function createPrepared(sqlJsDb, sql, saveFn) {
       return row;
     },
     run: function() {
-      var params = Array.prototype.slice.call(arguments);
+      const params = Array.prototype.slice.call(arguments);
       if (params.length === 1 && typeof params[0] === 'object' && !Array.isArray(params[0])) {
-        var named = {};
-        var obj = params[0];
-        for (var k in obj) {
+        const named = {};
+        const obj = params[0];
+        for (const k in obj) {
           if (Object.prototype.hasOwnProperty.call(obj, k)) {
             named['@' + k] = obj[k];
           }
@@ -69,11 +74,11 @@ function createPrepared(sqlJsDb, sql, saveFn) {
       } else {
         sqlJsDb.run(sql);
       }
-      var changes = sqlJsDb.getRowsModified();
+      const changes = sqlJsDb.getRowsModified();
       // Get last insert rowid
-      var lastStmt = sqlJsDb.prepare('SELECT last_insert_rowid() as id');
+      const lastStmt = sqlJsDb.prepare('SELECT last_insert_rowid() as id');
       lastStmt.step();
-      var lastId = lastStmt.getAsObject().id;
+      const lastId = lastStmt.getAsObject().id;
       lastStmt.free();
       saveFn();
       return { changes: changes, lastInsertRowid: lastId };
@@ -82,9 +87,9 @@ function createPrepared(sqlJsDb, sql, saveFn) {
 }
 
 function createDbWrapper(sqlJsDb, filePath) {
-  var saveFn = function() {
-    var data = sqlJsDb.export();
-    var buffer = Buffer.from(data);
+  const saveFn = function() {
+    const data = sqlJsDb.export();
+    const buffer = Buffer.from(data);
     fs.writeFileSync(filePath, buffer);
   };
 
@@ -101,7 +106,7 @@ function createDbWrapper(sqlJsDb, filePath) {
     },
     transaction: function(fn) {
       return function() {
-        var args = Array.prototype.slice.call(arguments);
+        const args = Array.prototype.slice.call(arguments);
         sqlJsDb.run('BEGIN TRANSACTION');
         try {
           fn.apply(null, args);
@@ -121,41 +126,23 @@ function createDbWrapper(sqlJsDb, filePath) {
   };
 }
 
-function initDatabase() {
-  // Ensure data directory exists
-  var dataDir = path.join(__dirname, '..', '..', 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
-  }
-
-  dbPath = path.join(dataDir, 'hackathon.db');
-
-  // sql.js init is async, but we need sync for compatibility
-  // Use the synchronous locateFile approach
-  var SQL = require('sql.js');
-
-  // sql.js returns a promise, so we store it for async init
-  // For backwards compat, we use a sync initialization pattern
-  return null; // Will be replaced by async init
-}
-
 // Async initialization
-var _initPromise = null;
+let _initPromise = null;
 
 function initDatabaseAsync() {
   if (_initPromise) return _initPromise;
 
   _initPromise = initSqlJs().then(function(SQL) {
-    var dataDir = path.join(__dirname, '..', '..', 'data');
+    const dataDir = path.join(__dirname, '..', '..', 'data');
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
     dbPath = path.join(dataDir, 'hackathon.db');
 
-    var sqlJsDb;
+    let sqlJsDb;
     if (fs.existsSync(dbPath)) {
-      var fileBuffer = fs.readFileSync(dbPath);
+      const fileBuffer = fs.readFileSync(dbPath);
       sqlJsDb = new SQL.Database(fileBuffer);
     } else {
       sqlJsDb = new SQL.Database();
@@ -251,8 +238,6 @@ function initDatabaseAsync() {
   return _initPromise;
 }
 
-module.exports = {
-  getDb: function() { return db; },
-  initDatabase: initDatabaseAsync,
-  initDatabaseAsync: initDatabaseAsync
-};
+function getDb() { return db; }
+
+export { getDb, initDatabaseAsync as initDatabase, initDatabaseAsync };

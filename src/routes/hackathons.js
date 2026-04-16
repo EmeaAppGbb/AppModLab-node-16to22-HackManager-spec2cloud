@@ -1,8 +1,10 @@
-var express = require('express');
-var router = express.Router();
-var moment = require('moment');
-var database = require('../config/database');
-var auth = require('../middleware/auth');
+import express from 'express';
+import moment from 'moment';
+import * as database from '../config/database.js';
+import { requireAuth } from '../middleware/auth.js';
+
+const router = express.Router();
+const auth = { requireAuth };
 
 /* GET all hackathons */
 router.get('/hackathons', function(req, res) {
@@ -126,4 +128,4 @@ router.post('/hackathons/:id/delete', auth.requireAuth, function(req, res) {
   }
 });
 
-module.exports = router;
+export default router;

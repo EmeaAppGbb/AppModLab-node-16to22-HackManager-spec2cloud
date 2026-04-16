@@ -1,0 +1,24 @@
+# Step 05: Migrate to ESM
+# ========================
+
+## Changes Made
+1. Added `"type": "module"` to package.json
+2. Bumped version to 2.0.0
+3. Converted all 11 JS files from CommonJS to ESM:
+   - `require()` → `import` with .js extensions on local paths
+   - `module.exports` → `export default` or named `export {}`
+   - `var` → `const`/`let` throughout
+4. Added `__dirname` polyfill using `fileURLToPath(import.meta.url)` where needed
+5. Used `import * as database` for named-export modules
+
+## Files Converted
+- src/app.js
+- src/config/database.js
+- src/middleware/auth.js
+- src/routes/index.js, auth.js, hackathons.js, teams.js, participants.js, submissions.js, judging.js
+- seeds/seed.js
+
+## Verification
+- npm run seed: SUCCESS
+- npm start: SUCCESS (port 3000)
+- Routes tested: /, /hackathons, /teams → all HTTP 200

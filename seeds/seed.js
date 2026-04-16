@@ -1,28 +1,33 @@
-var initSqlJs = require('sql.js');
-var bcrypt = require('bcryptjs');
-var path = require('path');
-var fs = require('fs');
+import initSqlJs from 'sql.js';
+import bcrypt from 'bcryptjs';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Ensure data directory exists
-var dataDir = path.join(__dirname, '..', 'data');
+const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir, { recursive: true });
 }
 
-var dbPath = path.join(dataDir, 'hackathon.db');
+const dbPath = path.join(dataDir, 'hackathon.db');
 
 initSqlJs().then(function(SQL) {
-  var sqlJsDb;
+  let sqlJsDb;
   if (fs.existsSync(dbPath)) {
-    var fileBuffer = fs.readFileSync(dbPath);
+    const fileBuffer = fs.readFileSync(dbPath);
     sqlJsDb = new SQL.Database(fileBuffer);
   } else {
     sqlJsDb = new SQL.Database();
   }
 
   function save() {
-    var data = sqlJsDb.export();
-    var buffer = Buffer.from(data);
+    const data = sqlJsDb.export();
+    const buffer = Buffer.from(data);
     fs.writeFileSync(dbPath, buffer);
   }
 
@@ -35,8 +40,8 @@ initSqlJs().then(function(SQL) {
   }
 
   function insertRow(sql, obj) {
-    var named = {};
-    for (var k in obj) {
+    const named = {};
+    for (const k in obj) {
       if (Object.prototype.hasOwnProperty.call(obj, k)) {
         named['@' + k] = obj[k];
       }
@@ -143,9 +148,9 @@ initSqlJs().then(function(SQL) {
 
   console.log('Seeding users...');
 
-  var userSql = `INSERT INTO users (username, email, password, role) VALUES (@username, @email, @password, @role)`;
+  const userSql = `INSERT INTO users (username, email, password, role) VALUES (@username, @email, @password, @role)`;
 
-  var users = [
+  const users = [
     { username: 'admin', email: 'admin@hackmanager.com', password: bcrypt.hashSync('admin123', 10), role: 'admin' },
     { username: 'judge_sarah', email: 'sarah@example.com', password: bcrypt.hashSync('judge123', 10), role: 'judge' },
     { username: 'judge_mike', email: 'mike@example.com', password: bcrypt.hashSync('judge123', 10), role: 'judge' },
@@ -157,7 +162,7 @@ initSqlJs().then(function(SQL) {
   ];
 
   runSql('BEGIN TRANSACTION');
-  for (var i = 0; i < users.length; i++) {
+  for (let i = 0; i < users.length; i++) {
     insertRow(userSql, users[i]);
   }
   runSql('COMMIT');
@@ -167,10 +172,10 @@ initSqlJs().then(function(SQL) {
 
   console.log('Seeding hackathons...');
 
-  var hackathonSql = `INSERT INTO hackathons (name, description, start_date, end_date, location, max_teams, status, created_by)
+  const hackathonSql = `INSERT INTO hackathons (name, description, start_date, end_date, location, max_teams, status, created_by)
     VALUES (@name, @description, @start_date, @end_date, @location, @max_teams, @status, @created_by)`;
 
-  var hackathons = [
+  const hackathons = [
   {
     name: 'AI Innovation Challenge 2023',
     description: 'Push the boundaries of artificial intelligence! Build innovative AI-powered solutions that solve real-world problems. Open to all skill levels.',
@@ -204,7 +209,7 @@ initSqlJs().then(function(SQL) {
 ];
 
   runSql('BEGIN TRANSACTION');
-  for (var i = 0; i < hackathons.length; i++) {
+  for (let i = 0; i < hackathons.length; i++) {
     insertRow(hackathonSql, hackathons[i]);
   }
   runSql('COMMIT');
@@ -214,10 +219,10 @@ initSqlJs().then(function(SQL) {
 
   console.log('Seeding teams...');
 
-  var teamSql = `INSERT INTO teams (name, hackathon_id, project_name, project_description, repo_url)
+  const teamSql = `INSERT INTO teams (name, hackathon_id, project_name, project_description, repo_url)
     VALUES (@name, @hackathon_id, @project_name, @project_description, @repo_url)`;
 
-  var teams = [
+  const teams = [
   {
     name: 'Neural Nexus',
     hackathon_id: 1,
@@ -256,7 +261,7 @@ initSqlJs().then(function(SQL) {
 ];
 
   runSql('BEGIN TRANSACTION');
-  for (var i = 0; i < teams.length; i++) {
+  for (let i = 0; i < teams.length; i++) {
     insertRow(teamSql, teams[i]);
   }
   runSql('COMMIT');
@@ -266,10 +271,10 @@ initSqlJs().then(function(SQL) {
 
   console.log('Seeding participants...');
 
-  var participantSql = `INSERT INTO participants (user_id, team_id, hackathon_id, role)
+  const participantSql = `INSERT INTO participants (user_id, team_id, hackathon_id, role)
     VALUES (@user_id, @team_id, @hackathon_id, @role)`;
 
-  var participants = [
+  const participants = [
   // Hackathon 1 — Neural Nexus
   { user_id: 4, team_id: 1, hackathon_id: 1, role: 'leader' },   // alice_dev
   { user_id: 5, team_id: 1, hackathon_id: 1, role: 'member' },   // bob_coder
@@ -288,7 +293,7 @@ initSqlJs().then(function(SQL) {
 ];
 
   runSql('BEGIN TRANSACTION');
-  for (var i = 0; i < participants.length; i++) {
+  for (let i = 0; i < participants.length; i++) {
     insertRow(participantSql, participants[i]);
   }
   runSql('COMMIT');
@@ -298,10 +303,10 @@ initSqlJs().then(function(SQL) {
 
   console.log('Seeding submissions...');
 
-  var submissionSql = `INSERT INTO submissions (team_id, hackathon_id, title, description, demo_url, repo_url, submitted_at)
+  const submissionSql = `INSERT INTO submissions (team_id, hackathon_id, title, description, demo_url, repo_url, submitted_at)
     VALUES (@team_id, @hackathon_id, @title, @description, @demo_url, @repo_url, @submitted_at)`;
 
-  var submissions = [
+  const submissions = [
   {
     team_id: 1,
     hackathon_id: 1,
@@ -332,7 +337,7 @@ initSqlJs().then(function(SQL) {
 ];
 
   runSql('BEGIN TRANSACTION');
-  for (var i = 0; i < submissions.length; i++) {
+  for (let i = 0; i < submissions.length; i++) {
     insertRow(submissionSql, submissions[i]);
   }
   runSql('COMMIT');
@@ -342,15 +347,15 @@ initSqlJs().then(function(SQL) {
 
   console.log('Seeding judges...');
 
-  var judgeSql = `INSERT INTO judges (user_id, hackathon_id) VALUES (@user_id, @hackathon_id)`;
+  const judgeSql = `INSERT INTO judges (user_id, hackathon_id) VALUES (@user_id, @hackathon_id)`;
 
-  var judgeRecords = [
+  const judgeRecords = [
     { user_id: 2, hackathon_id: 1 },
     { user_id: 3, hackathon_id: 1 }
   ];
 
   runSql('BEGIN TRANSACTION');
-  for (var i = 0; i < judgeRecords.length; i++) {
+  for (let i = 0; i < judgeRecords.length; i++) {
     insertRow(judgeSql, judgeRecords[i]);
   }
   runSql('COMMIT');
@@ -360,10 +365,10 @@ initSqlJs().then(function(SQL) {
 
   console.log('Seeding scores...');
 
-  var scoreSql = `INSERT INTO scores (submission_id, judge_id, innovation, technical, presentation, impact, overall, comments, scored_at)
+  const scoreSql = `INSERT INTO scores (submission_id, judge_id, innovation, technical, presentation, impact, overall, comments, scored_at)
     VALUES (@submission_id, @judge_id, @innovation, @technical, @presentation, @impact, @overall, @comments, @scored_at)`;
 
-  var scores = [
+  const scores = [
   // Judge Sarah (judge_id=1) scores for submission 1 (Neural Nexus)
   {
     submission_id: 1,
@@ -415,7 +420,7 @@ initSqlJs().then(function(SQL) {
 ];
 
   runSql('BEGIN TRANSACTION');
-  for (var i = 0; i < scores.length; i++) {
+  for (let i = 0; i < scores.length; i++) {
     insertRow(scoreSql, scores[i]);
   }
   runSql('COMMIT');

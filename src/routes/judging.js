@@ -1,7 +1,9 @@
-var express = require('express');
-var router = express.Router();
-var database = require('../config/database');
-var auth = require('../middleware/auth');
+import express from 'express';
+import * as database from '../config/database.js';
+import { requireAuth, requireJudge } from '../middleware/auth.js';
+
+const router = express.Router();
+const auth = { requireAuth, requireJudge };
 
 /* GET judging dashboard - list submissions to judge */
 router.get('/judging', function(req, res) {
@@ -92,4 +94,4 @@ router.post('/submissions/:id/score', auth.requireJudge, function(req, res) {
   }
 });
 
-module.exports = router;
+export default router;

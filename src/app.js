@@ -1,13 +1,26 @@
-var express = require('express');
-var path = require('path');
-var session = require('express-session');
+import express from 'express';
+import path from 'path';
+import session from 'express-session';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // Initialize database (async with sql.js)
-var database = require('./config/database');
+import * as database from './config/database.js';
+
+import indexRoutes from './routes/index.js';
+import authRoutes from './routes/auth.js';
+import hackathonRoutes from './routes/hackathons.js';
+import teamRoutes from './routes/teams.js';
+import participantRoutes from './routes/participants.js';
+import submissionRoutes from './routes/submissions.js';
+import judgingRoutes from './routes/judging.js';
 
 database.initDatabase().then(function() {
-  var app = express();
-  var port = process.env.PORT || 3000;
+  const app = express();
+  const port = process.env.PORT || 3000;
 
   // View engine setup
   app.set('view engine', 'ejs');
@@ -38,14 +51,6 @@ database.initDatabase().then(function() {
   // TODO: add request logging middleware (morgan)
 
   // Mount routes
-  var indexRoutes = require('./routes/index');
-  var authRoutes = require('./routes/auth');
-  var hackathonRoutes = require('./routes/hackathons');
-  var teamRoutes = require('./routes/teams');
-  var participantRoutes = require('./routes/participants');
-  var submissionRoutes = require('./routes/submissions');
-  var judgingRoutes = require('./routes/judging');
-
   app.use('/', indexRoutes);
   app.use('/auth', authRoutes);
   app.use('/', hackathonRoutes);
@@ -56,7 +61,7 @@ database.initDatabase().then(function() {
 
   // 404 handler
   app.use(function(req, res, next) {
-    var err = new Error('Not Found');
+    const err = new Error('Not Found');
     err.status = 404;
     next(err);
   });
@@ -74,8 +79,6 @@ database.initDatabase().then(function() {
   app.listen(port, function() {
     console.log('Server running on port ' + port);
   });
-
-  module.exports = app;
 }).catch(function(err) {
   console.error('Failed to initialize database:', err);
   process.exit(1);

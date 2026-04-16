@@ -1,7 +1,8 @@
-var express = require('express');
-var router = express.Router();
-var bcrypt = require('bcryptjs');
-var database = require('../config/database');
+import express from 'express';
+import bcrypt from 'bcryptjs';
+import * as database from '../config/database.js';
+
+const router = express.Router();
 
 /* GET login page */
 router.get('/login', function(req, res) {
@@ -77,4 +78,4 @@ router.get('/logout', function(req, res) {
   });
 });
 
-module.exports = router;
+export default router;

@@ -23,7 +23,4 @@ function requireJudge(req, res, next) {
   next();
 }
 
-module.exports = {
-  requireAuth: requireAuth,
-  requireJudge: requireJudge
-};
+export { requireAuth, requireJudge };

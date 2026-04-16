@@ -1,7 +1,8 @@
-var express = require('express');
-var router = express.Router();
-var moment = require('moment');
-var database = require('../config/database');
+import express from 'express';
+import moment from 'moment';
+import * as database from '../config/database.js';
+
+const router = express.Router();
 
 /* GET home page / dashboard */
 router.get('/', function(req, res) {
@@ -40,4 +41,4 @@ router.get('/', function(req, res) {
   }
 });
 
-module.exports = router;
+export default router;
