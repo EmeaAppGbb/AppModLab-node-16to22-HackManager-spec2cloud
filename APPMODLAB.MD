@@ -54,3 +54,28 @@ New users register with username, email, password, and password confirmation:
 | ![Hackathon Detail](assets/screenshots/03-hackathon-detail.png) | Individual hackathon detail view |
 | ![Login Page](assets/screenshots/04-login-page.png) | Login form |
 | ![Register Page](assets/screenshots/05-register-page.png) | Registration form |
+
+## Solution Branch
+
+The completed modernization is available on the **`solution-final`** branch with step-by-step tags:
+
+| Step | Tag | Description |
+|------|-----|-------------|
+| 01 | `step-01-explore-legacy` | Explore legacy Node 16 codebase |
+| 02 | `step-02-spec2cloud-analysis` | Spec2Cloud analysis of deprecated patterns |
+| 03 | `step-03-migration-spec` | Generate migration specification |
+| 04 | `step-04-update-node` | Update Node engine, replace better-sqlite3 with sql.js |
+| 05 | `step-05-migrate-esm` | Convert CommonJS to ES Modules |
+| 06 | `step-06-modernize-apis` | Replace moment.js, arrow functions, template literals |
+| 07 | `step-07-update-deps` | Verify all dependencies at latest compatible versions |
+| 08 | `step-08-build-test` | Add Node.js built-in test runner tests, verify app |
+
+### Key Modernization Changes
+- **CommonJS → ESM**: All `require()`/`module.exports` converted to `import`/`export`
+- **body-parser → Express built-in**: `express.urlencoded()` and `express.json()`
+- **moment.js → Native Intl API**: `Date.toLocaleDateString()` with Intl formatting
+- **better-sqlite3 → sql.js**: Pure JS/WASM SQLite (no native compilation)
+- **var → const/let**: Modern variable declarations
+- **function() → arrow functions**: ES6+ callback syntax
+- **Node.js built-in test runner**: Tests using `node:test` (9 tests passing)
+- **Node 22 features verified**: `structuredClone`, global `fetch`, `import.meta.url`
