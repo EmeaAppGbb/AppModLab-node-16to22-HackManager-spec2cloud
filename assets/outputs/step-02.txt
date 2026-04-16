@@ -1,0 +1,66 @@
+# Step 02: Spec2Cloud Analysis — Node 16 to 22 Deprecated Patterns
+# ================================================================
+
+## Deprecated / Legacy Patterns Analysis
+
+### 1. CommonJS Module System (require/module.exports)
+- **Status**: Still works in Node 22 but ESM is the standard
+- **Impact**: ALL source files (11 files)
+- **Migration**: Convert to `import`/`export` with `"type": "module"` in package.json
+- **Files affected**: src/app.js, src/config/database.js, src/middleware/auth.js, all routes, seeds/seed.js
+
+### 2. body-parser Standalone Package
+- **Status**: DEPRECATED since Express 4.16
+- **Impact**: src/app.js lines 3, 18-19
+- **Migration**: Replace with `express.json()` and `express.urlencoded()`
+- **Remove**: body-parser from dependencies
+
+### 3. moment.js Date Library
+- **Status**: DEPRECATED (maintenance mode since 2020)
+- **Impact**: src/routes/index.js, hackathons.js, submissions.js
+- **Migration**: Use native `Intl.DateTimeFormat` or `Date.toLocaleDateString()`
+
+### 4. var Declarations
+- **Status**: Functional but outdated
+- **Impact**: 20+ instances across all files
+- **Migration**: Replace with `const` (preferred) or `let`
+
+### 5. Function Expressions (non-arrow)
+- **Status**: Functional but verbose
+- **Impact**: 30+ callback functions
+- **Migration**: Convert `function(req, res, next)` to `(req, res, next) =>`
+
+### 6. Old better-sqlite3 Version (9.6.0)
+- **Status**: No prebuilds for Node 22+
+- **Impact**: Core database dependency
+- **Migration**: Upgrade to latest (11.x) with Node 22 prebuilds
+
+### 7. Synchronous-Only Patterns
+- **Status**: Works but blocks event loop
+- **Impact**: All route handlers, bcrypt ops
+- **Migration**: Keep sync for better-sqlite3 (it's designed sync), consider async bcrypt
+
+### 8. Old Nodemon (2.0.22)
+- **Status**: Outdated
+- **Migration**: Upgrade to 3.x or use Node 22 --watch flag
+
+### 9. No Node.js Built-in Test Runner Usage
+- **Status**: Node 22 has built-in test runner (node:test)
+- **Migration**: Add tests using node:test instead of external frameworks
+
+### 10. No structuredClone Usage
+- **Status**: Available since Node 17
+- **Migration**: Can replace JSON.parse(JSON.stringify()) patterns if found
+
+### 11. No Native fetch Usage
+- **Status**: Global fetch available since Node 18 (stable in 22)
+- **Migration**: No external HTTP calls currently, but document availability
+
+## Priority Migration Order
+1. Update Node engine + upgrade dependencies (better-sqlite3, nodemon)
+2. Remove body-parser, use Express built-in
+3. Convert CommonJS → ESM (biggest change)
+4. Replace moment.js with native date formatting
+5. Modernize syntax (var → const, function → arrow)
+6. Add basic tests with node:test
+7. Verify and validate
