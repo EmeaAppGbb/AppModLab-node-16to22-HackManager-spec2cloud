@@ -1,0 +1,21 @@
+# Step 04: Update Node Version
+# =============================
+
+## Changes Made
+1. Updated engines in package.json: ">=16.0.0" → ">=22.0.0"
+2. Replaced better-sqlite3 (native, node-gyp) with sql.js (pure JS/WebAssembly)
+   - No native compilation required
+   - Created better-sqlite3-compatible wrapper API in database.js
+3. Removed body-parser dependency (using Express built-in)
+4. Updated Express: ^4.18.2 → ^4.21.2
+5. Updated express-session: ^1.17.3 → ^1.18.1
+6. Updated ejs: ^3.1.9 → ^3.1.10
+7. Updated nodemon: ^2.0.22 → ^3.1.9
+8. Updated moment: ^2.29.4 → ^2.30.1 (will be removed in Step 06)
+9. Rewrote seeds/seed.js for sql.js compatibility
+10. Updated app.js to handle async DB initialization
+
+## Verification
+- npm install: SUCCESS (0 vulnerabilities)
+- npm run seed: SUCCESS (8 users, 3 hackathons, 5 teams, 10 participants, 3 submissions, 2 judges, 4 scores)
+- npm start: SUCCESS (Server on port 3000, HTTP 200 on /)

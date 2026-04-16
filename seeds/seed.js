@@ -1,4 +1,4 @@
-var Database = require('better-sqlite3');
+var initSqlJs = require('sql.js');
 var bcrypt = require('bcryptjs');
 var path = require('path');
 var fs = require('fs');
@@ -10,142 +10,167 @@ if (!fs.existsSync(dataDir)) {
 }
 
 var dbPath = path.join(dataDir, 'hackathon.db');
-var db = new Database(dbPath);
 
-// Enable WAL mode and foreign keys
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-
-// ─── Create Tables ──────────────────────────────────────────────────────────
-
-console.log('Creating tables...');
-
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    role TEXT DEFAULT 'participant',
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS hackathons (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT,
-    start_date TEXT NOT NULL,
-    end_date TEXT NOT NULL,
-    location TEXT,
-    max_teams INTEGER DEFAULT 10,
-    status TEXT DEFAULT 'upcoming',
-    created_by INTEGER REFERENCES users(id),
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS teams (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    hackathon_id INTEGER REFERENCES hackathons(id),
-    project_name TEXT,
-    project_description TEXT,
-    repo_url TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS participants (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id),
-    team_id INTEGER REFERENCES teams(id),
-    hackathon_id INTEGER REFERENCES hackathons(id),
-    role TEXT DEFAULT 'member',
-    registered_at TEXT DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS submissions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    team_id INTEGER REFERENCES teams(id),
-    hackathon_id INTEGER REFERENCES hackathons(id),
-    title TEXT NOT NULL,
-    description TEXT,
-    demo_url TEXT,
-    repo_url TEXT,
-    submitted_at TEXT DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS judges (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER REFERENCES users(id),
-    hackathon_id INTEGER REFERENCES hackathons(id)
-  );
-
-  CREATE TABLE IF NOT EXISTS scores (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    submission_id INTEGER REFERENCES submissions(id),
-    judge_id INTEGER REFERENCES judges(id),
-    innovation INTEGER DEFAULT 0,
-    technical INTEGER DEFAULT 0,
-    presentation INTEGER DEFAULT 0,
-    impact INTEGER DEFAULT 0,
-    overall REAL DEFAULT 0,
-    comments TEXT,
-    scored_at TEXT DEFAULT (datetime('now'))
-  );
-`);
-
-// ─── Clear Existing Data ────────────────────────────────────────────────────
-
-console.log('Clearing existing data...');
-
-db.exec(`
-  DELETE FROM scores;
-  DELETE FROM judges;
-  DELETE FROM submissions;
-  DELETE FROM participants;
-  DELETE FROM teams;
-  DELETE FROM hackathons;
-  DELETE FROM users;
-`);
-
-// ─── Seed Users ─────────────────────────────────────────────────────────────
-
-console.log('Seeding users...');
-
-var insertUser = db.prepare(`
-  INSERT INTO users (username, email, password, role)
-  VALUES (@username, @email, @password, @role)
-`);
-
-var users = [
-  { username: 'admin', email: 'admin@hackmanager.com', password: bcrypt.hashSync('admin123', 10), role: 'admin' },
-  { username: 'judge_sarah', email: 'sarah@example.com', password: bcrypt.hashSync('judge123', 10), role: 'judge' },
-  { username: 'judge_mike', email: 'mike@example.com', password: bcrypt.hashSync('judge123', 10), role: 'judge' },
-  { username: 'alice_dev', email: 'alice@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
-  { username: 'bob_coder', email: 'bob@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
-  { username: 'carol_hacker', email: 'carol@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
-  { username: 'dave_maker', email: 'dave@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
-  { username: 'eve_builder', email: 'eve@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' }
-];
-
-var insertUsers = db.transaction(function (items) {
-  for (let i = 0; i < items.length; i++) {
-    insertUser.run(items[i]);
+initSqlJs().then(function(SQL) {
+  var sqlJsDb;
+  if (fs.existsSync(dbPath)) {
+    var fileBuffer = fs.readFileSync(dbPath);
+    sqlJsDb = new SQL.Database(fileBuffer);
+  } else {
+    sqlJsDb = new SQL.Database();
   }
-});
 
-insertUsers(users);
-console.log('  -> ' + users.length + ' users inserted');
+  function save() {
+    var data = sqlJsDb.export();
+    var buffer = Buffer.from(data);
+    fs.writeFileSync(dbPath, buffer);
+  }
 
-// ─── Seed Hackathons ────────────────────────────────────────────────────────
+  function runSql(sql, params) {
+    if (params) {
+      sqlJsDb.run(sql, params);
+    } else {
+      sqlJsDb.run(sql);
+    }
+  }
 
-console.log('Seeding hackathons...');
+  function insertRow(sql, obj) {
+    var named = {};
+    for (var k in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, k)) {
+        named['@' + k] = obj[k];
+      }
+    }
+    sqlJsDb.run(sql, named);
+  }
 
-var insertHackathon = db.prepare(`
-  INSERT INTO hackathons (name, description, start_date, end_date, location, max_teams, status, created_by)
-  VALUES (@name, @description, @start_date, @end_date, @location, @max_teams, @status, @created_by)
-`);
+  // ─── Create Tables ──────────────────────────────────────────────────────────
 
-var hackathons = [
+  console.log('Creating tables...');
+
+  runSql(`
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
+      role TEXT DEFAULT 'participant',
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  runSql(`
+    CREATE TABLE IF NOT EXISTS hackathons (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT,
+      start_date TEXT NOT NULL,
+      end_date TEXT NOT NULL,
+      location TEXT,
+      max_teams INTEGER DEFAULT 10,
+      status TEXT DEFAULT 'upcoming',
+      created_by INTEGER REFERENCES users(id),
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  runSql(`
+    CREATE TABLE IF NOT EXISTS teams (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      hackathon_id INTEGER REFERENCES hackathons(id),
+      project_name TEXT,
+      project_description TEXT,
+      repo_url TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  runSql(`
+    CREATE TABLE IF NOT EXISTS participants (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER REFERENCES users(id),
+      team_id INTEGER REFERENCES teams(id),
+      hackathon_id INTEGER REFERENCES hackathons(id),
+      role TEXT DEFAULT 'member',
+      registered_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  runSql(`
+    CREATE TABLE IF NOT EXISTS submissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      team_id INTEGER REFERENCES teams(id),
+      hackathon_id INTEGER REFERENCES hackathons(id),
+      title TEXT NOT NULL,
+      description TEXT,
+      demo_url TEXT,
+      repo_url TEXT,
+      submitted_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+  runSql(`
+    CREATE TABLE IF NOT EXISTS judges (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER REFERENCES users(id),
+      hackathon_id INTEGER REFERENCES hackathons(id)
+    )
+  `);
+  runSql(`
+    CREATE TABLE IF NOT EXISTS scores (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      submission_id INTEGER REFERENCES submissions(id),
+      judge_id INTEGER REFERENCES judges(id),
+      innovation INTEGER DEFAULT 0,
+      technical INTEGER DEFAULT 0,
+      presentation INTEGER DEFAULT 0,
+      impact INTEGER DEFAULT 0,
+      overall REAL DEFAULT 0,
+      comments TEXT,
+      scored_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // ─── Clear Existing Data ────────────────────────────────────────────────────
+
+  console.log('Clearing existing data...');
+
+  runSql('DELETE FROM scores');
+  runSql('DELETE FROM judges');
+  runSql('DELETE FROM submissions');
+  runSql('DELETE FROM participants');
+  runSql('DELETE FROM teams');
+  runSql('DELETE FROM hackathons');
+  runSql('DELETE FROM users');
+
+  // ─── Seed Users ─────────────────────────────────────────────────────────────
+
+  console.log('Seeding users...');
+
+  var userSql = `INSERT INTO users (username, email, password, role) VALUES (@username, @email, @password, @role)`;
+
+  var users = [
+    { username: 'admin', email: 'admin@hackmanager.com', password: bcrypt.hashSync('admin123', 10), role: 'admin' },
+    { username: 'judge_sarah', email: 'sarah@example.com', password: bcrypt.hashSync('judge123', 10), role: 'judge' },
+    { username: 'judge_mike', email: 'mike@example.com', password: bcrypt.hashSync('judge123', 10), role: 'judge' },
+    { username: 'alice_dev', email: 'alice@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
+    { username: 'bob_coder', email: 'bob@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
+    { username: 'carol_hacker', email: 'carol@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
+    { username: 'dave_maker', email: 'dave@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' },
+    { username: 'eve_builder', email: 'eve@example.com', password: bcrypt.hashSync('pass123', 10), role: 'participant' }
+  ];
+
+  runSql('BEGIN TRANSACTION');
+  for (var i = 0; i < users.length; i++) {
+    insertRow(userSql, users[i]);
+  }
+  runSql('COMMIT');
+  console.log('  -> ' + users.length + ' users inserted');
+
+  // ─── Seed Hackathons ────────────────────────────────────────────────────────
+
+  console.log('Seeding hackathons...');
+
+  var hackathonSql = `INSERT INTO hackathons (name, description, start_date, end_date, location, max_teams, status, created_by)
+    VALUES (@name, @description, @start_date, @end_date, @location, @max_teams, @status, @created_by)`;
+
+  var hackathons = [
   {
     name: 'AI Innovation Challenge 2023',
     description: 'Push the boundaries of artificial intelligence! Build innovative AI-powered solutions that solve real-world problems. Open to all skill levels.',
@@ -178,25 +203,21 @@ var hackathons = [
   }
 ];
 
-var insertHackathons = db.transaction(function (items) {
-  for (let i = 0; i < items.length; i++) {
-    insertHackathon.run(items[i]);
+  runSql('BEGIN TRANSACTION');
+  for (var i = 0; i < hackathons.length; i++) {
+    insertRow(hackathonSql, hackathons[i]);
   }
-});
+  runSql('COMMIT');
+  console.log('  -> ' + hackathons.length + ' hackathons inserted');
 
-insertHackathons(hackathons);
-console.log('  -> ' + hackathons.length + ' hackathons inserted');
+  // ─── Seed Teams ─────────────────────────────────────────────────────────────
 
-// ─── Seed Teams ─────────────────────────────────────────────────────────────
+  console.log('Seeding teams...');
 
-console.log('Seeding teams...');
+  var teamSql = `INSERT INTO teams (name, hackathon_id, project_name, project_description, repo_url)
+    VALUES (@name, @hackathon_id, @project_name, @project_description, @repo_url)`;
 
-var insertTeam = db.prepare(`
-  INSERT INTO teams (name, hackathon_id, project_name, project_description, repo_url)
-  VALUES (@name, @hackathon_id, @project_name, @project_description, @repo_url)
-`);
-
-var teams = [
+  var teams = [
   {
     name: 'Neural Nexus',
     hackathon_id: 1,
@@ -234,25 +255,21 @@ var teams = [
   }
 ];
 
-var insertTeams = db.transaction(function (items) {
-  for (let i = 0; i < items.length; i++) {
-    insertTeam.run(items[i]);
+  runSql('BEGIN TRANSACTION');
+  for (var i = 0; i < teams.length; i++) {
+    insertRow(teamSql, teams[i]);
   }
-});
+  runSql('COMMIT');
+  console.log('  -> ' + teams.length + ' teams inserted');
 
-insertTeams(teams);
-console.log('  -> ' + teams.length + ' teams inserted');
+  // ─── Seed Participants ──────────────────────────────────────────────────────
 
-// ─── Seed Participants ──────────────────────────────────────────────────────
+  console.log('Seeding participants...');
 
-console.log('Seeding participants...');
+  var participantSql = `INSERT INTO participants (user_id, team_id, hackathon_id, role)
+    VALUES (@user_id, @team_id, @hackathon_id, @role)`;
 
-var insertParticipant = db.prepare(`
-  INSERT INTO participants (user_id, team_id, hackathon_id, role)
-  VALUES (@user_id, @team_id, @hackathon_id, @role)
-`);
-
-var participants = [
+  var participants = [
   // Hackathon 1 — Neural Nexus
   { user_id: 4, team_id: 1, hackathon_id: 1, role: 'leader' },   // alice_dev
   { user_id: 5, team_id: 1, hackathon_id: 1, role: 'member' },   // bob_coder
@@ -270,25 +287,21 @@ var participants = [
   { user_id: 8, team_id: 5, hackathon_id: 3, role: 'member' }    // eve_builder
 ];
 
-var insertParticipants = db.transaction(function (items) {
-  for (let i = 0; i < items.length; i++) {
-    insertParticipant.run(items[i]);
+  runSql('BEGIN TRANSACTION');
+  for (var i = 0; i < participants.length; i++) {
+    insertRow(participantSql, participants[i]);
   }
-});
+  runSql('COMMIT');
+  console.log('  -> ' + participants.length + ' participants inserted');
 
-insertParticipants(participants);
-console.log('  -> ' + participants.length + ' participants inserted');
+  // ─── Seed Submissions ───────────────────────────────────────────────────────
 
-// ─── Seed Submissions ───────────────────────────────────────────────────────
+  console.log('Seeding submissions...');
 
-console.log('Seeding submissions...');
+  var submissionSql = `INSERT INTO submissions (team_id, hackathon_id, title, description, demo_url, repo_url, submitted_at)
+    VALUES (@team_id, @hackathon_id, @title, @description, @demo_url, @repo_url, @submitted_at)`;
 
-var insertSubmission = db.prepare(`
-  INSERT INTO submissions (team_id, hackathon_id, title, description, demo_url, repo_url, submitted_at)
-  VALUES (@team_id, @hackathon_id, @title, @description, @demo_url, @repo_url, @submitted_at)
-`);
-
-var submissions = [
+  var submissions = [
   {
     team_id: 1,
     hackathon_id: 1,
@@ -318,48 +331,39 @@ var submissions = [
   }
 ];
 
-var insertSubmissions = db.transaction(function (items) {
-  for (let i = 0; i < items.length; i++) {
-    insertSubmission.run(items[i]);
+  runSql('BEGIN TRANSACTION');
+  for (var i = 0; i < submissions.length; i++) {
+    insertRow(submissionSql, submissions[i]);
   }
-});
+  runSql('COMMIT');
+  console.log('  -> ' + submissions.length + ' submissions inserted');
 
-insertSubmissions(submissions);
-console.log('  -> ' + submissions.length + ' submissions inserted');
+  // ─── Seed Judges ────────────────────────────────────────────────────────────
 
-// ─── Seed Judges ────────────────────────────────────────────────────────────
+  console.log('Seeding judges...');
 
-console.log('Seeding judges...');
+  var judgeSql = `INSERT INTO judges (user_id, hackathon_id) VALUES (@user_id, @hackathon_id)`;
 
-var insertJudge = db.prepare(`
-  INSERT INTO judges (user_id, hackathon_id)
-  VALUES (@user_id, @hackathon_id)
-`);
+  var judgeRecords = [
+    { user_id: 2, hackathon_id: 1 },
+    { user_id: 3, hackathon_id: 1 }
+  ];
 
-var judgeRecords = [
-  { user_id: 2, hackathon_id: 1 },  // judge_sarah for AI Innovation Challenge
-  { user_id: 3, hackathon_id: 1 }   // judge_mike for AI Innovation Challenge
-];
-
-var insertJudges = db.transaction(function (items) {
-  for (let i = 0; i < items.length; i++) {
-    insertJudge.run(items[i]);
+  runSql('BEGIN TRANSACTION');
+  for (var i = 0; i < judgeRecords.length; i++) {
+    insertRow(judgeSql, judgeRecords[i]);
   }
-});
+  runSql('COMMIT');
+  console.log('  -> ' + judgeRecords.length + ' judges inserted');
 
-insertJudges(judgeRecords);
-console.log('  -> ' + judgeRecords.length + ' judges inserted');
+  // ─── Seed Scores ────────────────────────────────────────────────────────────
 
-// ─── Seed Scores ────────────────────────────────────────────────────────────
+  console.log('Seeding scores...');
 
-console.log('Seeding scores...');
+  var scoreSql = `INSERT INTO scores (submission_id, judge_id, innovation, technical, presentation, impact, overall, comments, scored_at)
+    VALUES (@submission_id, @judge_id, @innovation, @technical, @presentation, @impact, @overall, @comments, @scored_at)`;
 
-var insertScore = db.prepare(`
-  INSERT INTO scores (submission_id, judge_id, innovation, technical, presentation, impact, overall, comments, scored_at)
-  VALUES (@submission_id, @judge_id, @innovation, @technical, @presentation, @impact, @overall, @comments, @scored_at)
-`);
-
-var scores = [
+  var scores = [
   // Judge Sarah (judge_id=1) scores for submission 1 (Neural Nexus)
   {
     submission_id: 1,
@@ -410,19 +414,22 @@ var scores = [
   }
 ];
 
-var insertScores = db.transaction(function (items) {
-  for (let i = 0; i < items.length; i++) {
-    insertScore.run(items[i]);
+  runSql('BEGIN TRANSACTION');
+  for (var i = 0; i < scores.length; i++) {
+    insertRow(scoreSql, scores[i]);
   }
+  runSql('COMMIT');
+  console.log('  -> ' + scores.length + ' scores inserted');
+
+  // ─── Done ───────────────────────────────────────────────────────────────────
+
+  save();
+  sqlJsDb.close();
+  console.log('');
+  console.log('Database seeded successfully!');
+  console.log('Database location: ' + dbPath);
+  process.exit(0);
+}).catch(function(err) {
+  console.error('Seed failed:', err);
+  process.exit(1);
 });
-
-insertScores(scores);
-console.log('  -> ' + scores.length + ' scores inserted');
-
-// ─── Done ───────────────────────────────────────────────────────────────────
-
-db.close();
-console.log('');
-console.log('Database seeded successfully!');
-console.log('Database location: ' + dbPath);
-process.exit(0);
